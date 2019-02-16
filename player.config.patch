@@ -1,0 +1,5 @@
+[
+  {"op" : "add", "path" : "/defaultBlueprints/tier1/-", "value" : "fuelcatalyst"},
+  {"op" : "add", "path" : "/defaultBlueprints/tier1/-", "value" : "catalystfuelrefinery"},
+  {"op" : "add", "path" : "/defaultBlueprints/tier1/-", "value" : "mechfuelrefinery"}
+]

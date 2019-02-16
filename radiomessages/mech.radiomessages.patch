@@ -1,0 +1,20 @@
+[
+  {
+        "op": "replace",
+        "path": "/testdrive03/text",
+        "value": "Your mech switches to a ground-movement configuration when in an environment with gravity, you can manually switch from ground-movement to flight double tapping the UP key."
+  },
+
+  {
+        "op": "replace",
+        "path": "/testdrive04/text",
+		     "value" : "Please be aware of your mech's ^#1d8e25;health^white; and ^#bf2fe2;fuel^white; reserves, visualised respectively by the colored bars you can see above your vehicle. The ^#bf2fe2;fuel^white; will deplete over time and the ^#1d8e25;health^white; bar will deplete when the mech takes damage."
+  },
+
+  {
+        "op": "replace",
+        "path": "/testdrive05/text",
+		     "value" : "Hostile entities also exist in zero-gravity environments. My cosmonautical records indicate that defeating them may result in obtaining a battery, which your mech can absorb to replenish health and fuel."
+  }
+
+]

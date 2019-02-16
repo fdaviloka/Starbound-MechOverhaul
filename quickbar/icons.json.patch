@@ -1,0 +1,11 @@
+[
+  {
+    "op": "add",
+    "path": "/normal/-",
+    "value": {
+      "label": "Mech fuel tank",
+      "pane": "/interface/mechfuel/mechfuel.config",
+      "icon": "/interface/mechfuel/icon.png"
+    }
+  }
+]
