@@ -1,0 +1,29 @@
+[
+
+  {
+    "op": "add", "path": "/massStatLabel", "value":
+    {
+      "type": "label",
+      "position": [12, 35],
+      "hAnchor": "left",
+      "wrapWidth": 126,
+      "value" : "Mass: xxx t"
+    }
+  },
+
+  {
+    "op" : "replace", "path" : "/powerStatLabel/position/1", "value" : 56
+  },
+
+  {
+    "op" : "replace", "path" : "/powerStatImage/position/1", "value" : 55
+  },
+
+  {
+    "op" : "replace", "path" : "/energyDrainLabelLabel/position/1", "value" : 45
+  },
+
+  {
+    "op" : "replace", "path" : "/energyDrainStatLabel/position/1", "value" : 45
+  }
+]
