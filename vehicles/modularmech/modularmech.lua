@@ -33,13 +33,6 @@ function init()
   self.ownerUuid = config.getParameter("ownerUuid")
   self.ownerEntityId = config.getParameter("ownerEntityId")
 
-  while not self.mechParams do
-    self.mechParamsMessage = world.sendEntityMessage(self.ownerEntityId, "getMechParams")
-    if self.mechParamsMessage:finished() and self.mechParamsMessage:succeeded() then
-      self.mechParams = self.mechParamsMessage:result()
-    end
-  end
-
   -- initialize configuration parameters
 
   self.movementSettings = config.getParameter("movementSettings")
@@ -152,7 +145,6 @@ function init()
   -- setup energy pool --modded
   --set up health pool
   self.healthMax = self.parts.body.energyMax + self.parts.body.healthBonus
-  sb.logInfo(self.healthMax)
   storage.health = storage.health or (config.getParameter("startHealthRatio", 1.0) * self.healthMax)
 
   self.energyMax = self.parts.body.energyMax
@@ -160,6 +152,8 @@ function init()
 
   self.energyDrain = self.parts.body.energyDrain + (self.parts.leftArm.energyDrain or 0) + (self.parts.rightArm.energyDrain or 0)
   self.energyDrain = self.energyDrain*0.6
+  --adding mass energy drain penalty
+  self.energyDrain = self.energyDrain + (self.parts.body.energyPenalty or 0)
   --end
 
   -- check for environmental hazards / protection

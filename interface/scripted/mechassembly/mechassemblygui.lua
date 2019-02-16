@@ -223,15 +223,17 @@ function updatePreview()
     widget.setVisible("lblMass", true)
     widget.setVisible("lblHealthBonus", true)
     widget.setVisible("lblSpeedPenalty", true)
+    widget.setVisible("lblEnergyPenalty", true)
     widget.setVisible("imgEnergyBar", true)
     widget.setVisible("lblEnergy", true)
     widget.setVisible("lblDrain", true)
 
     local healthMax = params.parts.body.energyMax + params.parts.body.healthBonus
-    local speedPenaltyPercent = params.parts.body.speedNerf * 100
+    local speedPenaltyPercent = (params.parts.body.speedNerf or 0) * 100
     local energyMax = params.parts.body.energyMax
     local energyDrain = params.parts.body.energyDrain + params.parts.leftArm.energyDrain + params.parts.rightArm.energyDrain
 	  energyDrain = energyDrain * 0.6
+    energyDrain = energyDrain + params.parts.body.energyPenalty
     local mass = params.parts.body.totalMass
 
     if speedPenaltyPercent <= 0 then
@@ -240,16 +242,23 @@ function updatePreview()
       widget.setVisible("lblSpeedPenalty", true)
     end
 
-    if params.parts.body.healthBonus <= 0 then
+    if params.parts.body.healthBonus and params.parts.body.healthBonus <= 0 then
       widget.setVisible("lblHealthBonus", false)
     else
       widget.setVisible("lblHealthBonus", true)
+    end
+
+    if params.parts.body.energyPenalty and params.parts.body.energyPenalty <= 0 then
+      widget.setVisible("lblEnergyPenalty", false)
+    else
+      widget.setVisible("lblEnergyPenalty", true)
     end
 	  --set healthmax and mass text
 	  widget.setText("lblHealth", string.format(self.healthFormat, healthMax))
     widget.setText("lblMass", string.format(self.massFormat, mass))
     widget.setText("lblHealthBonus", string.format("Health bonus: %d", params.parts.body.healthBonus))
-    widget.setText("lblSpeedPenalty", "Speed penalty: -" .. speedPenaltyPercent .. "%")
+    widget.setText("lblSpeedPenalty", "Speed penalty: -" .. string.format("%d", speedPenaltyPercent) .. "%")
+    widget.setText("lblEnergyPenalty", "Drain penalty:+" .. string.format("%.2f", params.parts.body.energyPenalty or 0) .. "F/s")
     widget.setText("lblEnergy", string.format(self.energyFormat, energyMax))
     widget.setText("lblDrain", string.format(self.drainFormat, energyDrain))
   else
@@ -259,6 +268,7 @@ function updatePreview()
     widget.setVisible("lblMass", false)
     widget.setVisible("lblHealthBonus", false)
     widget.setVisible("lblSpeedPenalty", false)
+    widget.setVisible("lblEnergyPenalty", false)
     widget.setVisible("imgEnergyBar", false)
     widget.setVisible("lblEnergy", false)
     widget.setVisible("lblDrain", false)

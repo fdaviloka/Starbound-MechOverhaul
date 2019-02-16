@@ -18,7 +18,7 @@
 		      {
 		        "type" : "label",
             "zlevel" : 1,
-            "position" : [144, 70],
+            "position" : [142, 74],
             "hAnchor" : "mid",
             "vAnchor" : "mid",
             "wrapWidth" : 100,
@@ -33,7 +33,7 @@
 		      {
 		        "type" : "label",
             "zlevel" : 1,
-            "position" : [144, 60],
+            "position" : [142, 65],
             "hAnchor" : "mid",
             "vAnchor" : "mid",
             "wrapWidth" : 100,
@@ -48,12 +48,27 @@
 		      {
 		        "type" : "label",
             "zlevel" : 1,
-            "position" : [144, 50],
+            "position" : [142, 56],
             "hAnchor" : "mid",
             "vAnchor" : "mid",
             "wrapWidth" : 100,
             "value" : ""
 	        }
+  },
+
+  {
+        "op": "add",
+        "path": "/gui/lblEnergyPenalty",
+        "value":
+          {
+            "type" : "label",
+            "zlevel" : 1,
+            "position" : [142, 46],
+            "hAnchor" : "mid",
+            "vAnchor" : "mid",
+            "wrapWidth" : 100,
+            "value" : "Drain penalty: +xxx F/s"
+          }
   },
 
   {

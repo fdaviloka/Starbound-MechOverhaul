@@ -178,76 +178,29 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
     params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
   end
 
-  --calculating mech mass based on stats
+  local partContext = {}
+  partContext.protection = params.parts.body and params.parts.body.protection or 0
+  partContext.power = params.parts.leftArm and params.parts.leftArm.power or 0
+  partContext.legSpeed = params.parts.legs and params.parts.legs.groundSpeed or 0
+  partContext.jump = params.parts.legs and params.parts.legs.jumpVelocity or 0
+  partContext.boosterSpeed = params.parts.booster and params.parts.booster.airControlSpeed or 0
+  partContext.control = params.parts.booster and params.parts.booster.airControlForce or 0
+  if params.parts.body then params.parts.body.massValue = MechPartManager.getPartMass("body", partContext) end
+  if params.parts.leftArm then params.parts.leftArm.massValue = MechPartManager.getPartMass("arm", partContext) end
+  partContext.power = params.parts.rightArm and params.parts.rightArm.power or 0
+  if params.parts.rightArm then params.parts.rightArm.massValue = MechPartManager.getPartMass("arm", partContext) end
+  if params.parts.booster then params.parts.booster.massValue = MechPartManager.getPartMass("booster", partContext) end
+  if params.parts.legs then params.parts.legs.massValue = MechPartManager.getPartMass("legs", partContext) end
+
   local mass = 0
+  mass = mass + (params.parts.body and params.parts.body.massValue or 0)
+  mass = mass + (params.parts.leftArm and params.parts.leftArm.massValue or 0)
+  mass = mass + (params.parts.rightArm and params.parts.rightArm.massValue or 0)
+  mass = mass + (params.parts.booster and params.parts.booster.massValue or 0)
+  mass = mass + (params.parts.legs and params.parts.legs.massValue or 0)
+  if params.parts.body then params.parts.body.totalMass = mass end
 
-  --body mass
-  if params.parts.body then
-    if params.parts.body.protection == 0.682 then
-      params.parts.body.massValue = 1
-    elseif params.parts.body.protection == 0.716 then
-    params.parts.body.massValue = 1.5
-    elseif params.parts.body.protection == 0.760 then
-      params.parts.body.massValue = 2
-    elseif params.parts.body.protection == 0.808 then
-      params.parts.body.massValue = 3.5
-    elseif params.parts.body.protection == 0.846 then
-      params.parts.body.massValue = 4.5
-    elseif params.parts.body.protection == 0.877 then
-      params.parts.body.massValue = 6
-    elseif params.parts.body.protection == 0.902 then
-      params.parts.body.massValue = 8
-    elseif params.parts.body.protection == 0.921 then
-      params.parts.body.massValue = 10
-    elseif params.parts.body.protection == 0.937 then
-      params.parts.body.massValue = 12.5
-    elseif params.parts.body.protection == 0.950 then
-      params.parts.body.massValue = 15
-    end
-    mass = mass + params.parts.body.massValue
-  end
-
-  --calculating legs mass from 1 to 7 based on stats
-  if params.parts.legs then
-    local sec1 = (7 - 1) / (11 - 3.25)
-    sec1 = sec1 * (params.parts.legs.groundSpeed - 3.25) + 1
-    sec1 = math.floor(sec1 * 10) / 10
-
-    local sec2 = (7 - 1) / (46 - 14)
-    sec2 = sec2 * (params.parts.legs.jumpVelocity - 14) + 1
-    sec2 = math.floor(sec2 * 10) / 10
-    params.parts.legs.massValue = (sec1 + sec2) / 2
-    mass = mass + params.parts.legs.massValue
-  end
-
-  --calculating booster mass from 1 to 6.5 based on stats
-  if params.parts.booster then
-    local sec1 = (6.5 - 1) / (10 - 2)
-    sec1 = sec1 * (params.parts.booster.airControlSpeed - 2) + 1
-    sec1 = math.floor(sec1 * 10) / 10
-
-    local sec2 = (6.5 - 1) / (50 - 10)
-    sec2 = sec2 * (params.parts.booster.airControlForce - 10) + 1
-    sec2 = math.floor(sec2 * 10) / 10
-    params.parts.booster.massValue = (sec1 + sec2) / 2
-    mass = mass + params.parts.booster.massValue
-  end
-
-  --arms mass = arms power * 0.4
-  if params.parts.leftArm then
-    params.parts.leftArm.massValue = params.parts.leftArm.power * 0.40
-    mass = mass + params.parts.leftArm.massValue
-  end
-  if params.parts.rightArm then
-    params.parts.rightArm.massValue = params.parts.rightArm.power * 0.40
-    mass = mass + params.parts.rightArm.massValue
-  end
-
-  mass = math.floor(mass * 10) / 10
-  params.parts.body.totalMass = mass
-  --end
-
-  --calculating health bonus and speed nerf based on mass and protection
+  --calculating health bonus, speed penalty and energy drain penalty based on mass and protection
   --Mech body protection values
   --level3: 760
   --level4: 808
@@ -276,9 +229,93 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
     local sec = (maxNerf - initialNerf) / (maxMass - initialMass)
     sec = sec * (params.parts.body.totalMass - initialMass) + initialNerf
     params.parts.body.speedNerf = math.floor(sec * 100) / 100
+
+    initialNerf = 0.01
+    maxNerf = 0.35
+
+    local sec = (maxNerf - initialNerf) / (maxMass - initialMass)
+    sec = sec * (params.parts.body.totalMass - initialMass) + initialNerf
+
+    local energyDrain = params.parts.body.energyDrain + (params.parts.leftArm and params.parts.leftArm.energyDrain or 0) + (params.parts.rightArm and params.parts.rightArm.energyDrain or 0)
+    energyDrain = energyDrain * 0.6
+    energyDrain = energyDrain * sec
+    energyDrain = math.floor(energyDrain * 100) / 100
+    params.parts.body.energyPenalty = energyDrain
   end
 
   return params
+end
+
+--calculating mech mass based on stats
+function MechPartManager.getPartMass(partName, partContext)
+  local mass = 0
+
+  if partName == "body" then
+    --calculating mech mass based on stats
+
+    local protection = partContext.protection
+    if not protection then return 0 end
+
+    --body mass
+    if protection == 0.682 then
+      mass = 1
+    elseif protection == 0.716 then
+      mass = 1.5
+    elseif protection == 0.760 then
+      mass = 2
+    elseif protection == 0.808 then
+      mass = 3.5
+    elseif protection == 0.846 then
+      mass = 4.5
+    elseif protection == 0.877 then
+      mass = 6
+    elseif protection == 0.902 then
+      mass = 8
+    elseif protection == 0.921 then
+      mass = 10
+    elseif protection == 0.937 then
+      mass = 12.5
+    elseif protection == 0.950 then
+      mass = 15
+    end
+
+  elseif partName == "arm" then
+    if not partContext.power then return 0 end
+    --arms mass = arms power * 0.4
+    mass = partContext.power * 0.40
+
+  elseif partName == "legs" then
+    --calculating legs mass from 1 to 7 based on stats
+    local groundSpeed = partContext.legSpeed
+    local jumpVelocity =partContext.jump
+    if not groundSpeed or not jumpVelocity then return 0 end
+
+    local sec1 = (6.5 - 1) / (11 - 3.25)
+    sec1 = sec1 * (groundSpeed - 3.25) + 1
+    sec1 = math.floor(sec1 * 10) / 10
+
+    local sec2 = (6.5 - 1) / (46 - 14)
+    sec2 = sec2 * (jumpVelocity - 14) + 1
+    sec2 = math.floor(sec2 * 10) / 10
+
+    mass = (sec1 + sec2) / 2
+  elseif partName == "booster" then
+    --calculating booster mass from 1 to 6.5 based on stats
+    local airControlSpeed = partContext.boosterSpeed
+    local airControlForce = partContext.control
+    if not airControlForce or not airControlSpeed then return 0 end
+
+    local sec1 = (7 - 1) / (10 - 2)
+    sec1 = sec1 * (airControlSpeed - 2) + 1
+    sec1 = math.floor(sec1 * 10) / 10
+
+    local sec2 = (7 - 1) / (50 - 10)
+    sec2 = sec2 * (airControlForce - 10) + 1
+    sec2 = math.floor(sec2 * 10) / 10
+    mass = (sec1 + sec2) / 2
+  end
+
+  return mass
 end
 
 function MechPartManager:validateColorIndex(colorIndex)
