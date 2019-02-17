@@ -152,6 +152,12 @@
   },
 
   {
+        "op": "replace",
+        "path": "/gui/lblSlot_horn/value",
+        "value": "Horn/Upgrades"
+  },
+
+  {
         "op": "add",
         "path": "/healthFormat",
         "value": "Health: %d"
