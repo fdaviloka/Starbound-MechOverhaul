@@ -228,6 +228,7 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
 
     local sec = (maxNerf - initialNerf) / (maxMass - initialMass)
     sec = sec * (params.parts.body.totalMass - initialMass) + initialNerf
+    if sec < 0 then sec = 0 end
     params.parts.body.speedNerf = math.floor(sec * 100) / 100
 
     initialNerf = 0.01
@@ -240,6 +241,7 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
     energyDrain = energyDrain * 0.6
     energyDrain = energyDrain * sec
     energyDrain = math.floor(energyDrain * 100) / 100
+    if energyDrain < 0 then energyDrain = 0 end
     params.parts.body.energyPenalty = energyDrain
   end
 

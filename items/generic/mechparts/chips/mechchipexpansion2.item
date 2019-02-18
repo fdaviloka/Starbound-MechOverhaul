@@ -1,0 +1,11 @@
+{
+  "itemName" : "mechchipexpansion2",
+  "price" : 1000,
+  "maxStack" : 1,
+  "rarity" : "Common",
+  "category" : "mechPart",
+  "inventoryIcon" : "mechchipexpansion2.png",
+  "description" : "test",
+  "shortdescription" : "Chip Slot Expansion MKII",
+  "itemTags" : [ ]
+}

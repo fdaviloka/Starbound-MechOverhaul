@@ -12,6 +12,9 @@ previewStates = {
 }
 
 function init()
+  --fist itemslot update
+  self.itemChanged = true
+
   self.disabledText = config.getParameter("disabledText")
   self.completeText = config.getParameter("completeText")
   self.incompleteText = config.getParameter("incompleteText")
@@ -30,12 +33,16 @@ function init()
     if not unlocked then
       self.disabled = true
       widget.setVisible("imgDisabledOverlay", true)
+      widget.setVisible("imgLockedExpansion", true)
+      widget.setVisible("itemSlot_expansion", false)
       widget.setButtonEnabled("btnPrevPrimaryColor", false)
       widget.setButtonEnabled("btnNextPrimaryColor", false)
       widget.setButtonEnabled("btnPrevSecondaryColor", false)
       widget.setButtonEnabled("btnNextSecondaryColor", false)
     else
       widget.setVisible("imgDisabledOverlay", false)
+      widget.setVisible("imgLockedExpansion", false)
+      widget.setVisible("itemSlot_expansion", true)
     end
   else
     sb.logError("Mech assembly interface unable to check player mech enabled state!")
@@ -76,7 +83,143 @@ function init()
 end
 
 function update(dt)
+  if self.disabled then return end
 
+  --update item slots based on dummy quest
+  if not self.chipsMessage and self.itemChanged then
+    self.chipsMessage = world.sendEntityMessage(player.id(), "getMechUpgradeItems")
+  end
+  if self.chipsMessage and self.chipsMessage:finished() then
+    if self.chipsMessage:succeeded() then
+      local chips = self.chipsMessage:result()
+      widget.setItemSlotItem("itemSlot_upgrade1", chips.chip1)
+      widget.setItemSlotItem("itemSlot_upgrade2", chips.chip2)
+      widget.setItemSlotItem("itemSlot_upgrade3", chips.chip3)
+      widget.setItemSlotItem("itemSlot_expansion", chips.expansion)
+
+      local expansionItem = widget.itemSlotItem("itemSlot_expansion")
+
+      if expansionItem then
+        if expansionItem.name == "mechchipexpansion1" then
+          widget.setVisible("imgLocked1", false)
+          widget.setVisible("itemSlot_upgrade1", true)
+
+          widget.setVisible("imgLocked2", true)
+          widget.setVisible("itemSlot_upgrade2", false)
+          widget.setVisible("imgLocked3", true)
+          widget.setVisible("itemSlot_upgrade3", false)
+        elseif expansionItem.name == "mechchipexpansion2" then
+          widget.setVisible("imgLocked1", false)
+          widget.setVisible("itemSlot_upgrade1", true)
+          widget.setVisible("imgLocked2", false)
+          widget.setVisible("itemSlot_upgrade2", true)
+
+          widget.setVisible("imgLocked3", true)
+          widget.setVisible("itemSlot_upgrade3", false)
+        elseif expansionItem.name == "mechchipexpansion3" then
+          widget.setVisible("imgLocked1", false)
+          widget.setVisible("itemSlot_upgrade1", true)
+          widget.setVisible("imgLocked2", false)
+          widget.setVisible("itemSlot_upgrade2", true)
+          widget.setVisible("imgLocked3", false)
+          widget.setVisible("itemSlot_upgrade3", true)
+        end
+      else
+        widget.setVisible("imgLocked1", true)
+        widget.setVisible("itemSlot_upgrade1", false)
+        widget.setVisible("imgLocked2", true)
+        widget.setVisible("itemSlot_upgrade2", false)
+        widget.setVisible("imgLocked3", true)
+        widget.setVisible("itemSlot_upgrade3", false)
+      end
+    end
+    self.chipsMessage = nil
+    self.itemChanged = false
+  end
+
+end
+
+function setExpansion()
+  if self.disabled then return end
+
+  swapItemChips("itemSlot_expansion", true, "setMechExpansionSlotItem")
+end
+
+function setChip1()
+  if self.disabled then return end
+
+  swapItemChips("itemSlot_upgrade1", false, "setMechUpgradeItem1")
+end
+
+function setChip2()
+  if self.disabled then return end
+
+  swapItemChips("itemSlot_upgrade2", false, "setMechUpgradeItem2")
+end
+
+function setChip3()
+  if self.disabled then return end
+
+  swapItemChips("itemSlot_upgrade3", false, "setMechUpgradeItem3")
+end
+
+function swapItemChips(slotName, expansion, messageName)
+  if self.disabled then return end
+
+  local currentItem = widget.itemSlotItem(slotName)
+  local swapItem = player.swapSlotItem()
+
+  local upgrades = {}
+  upgrades.upgrade1 = widget.itemSlotItem("itemSlot_upgrade1")
+  upgrades.upgrade2 = widget.itemSlotItem("itemSlot_upgrade2")
+  upgrades.upgrade3 = widget.itemSlotItem("itemSlot_upgrade3")
+
+  if swapItem and ((upgrades.upgrade1 and swapItem.name == upgrades.upgrade1.name)
+  or (upgrades.upgrade2 and swapItem.name == upgrades.upgrade2.name)
+  or (upgrades.upgrade3 and swapItem.name == upgrades.upgrade3.name)) then return end
+
+  if not swapItem or (not expansion and string.find(swapItem.name, "mechchip")) or
+  (expansion and string.find(swapItem.name, "mechchipexpansion")) then
+    player.setSwapSlotItem(currentItem)
+    widget.setItemSlotItem(slotName, swapItem)
+
+    world.sendEntityMessage(player.id(), messageName, swapItem)
+
+    currentItem = widget.itemSlotItem("itemSlot_expansion")
+
+    if not currentItem and expansion then
+      if upgrades.upgrade1 then
+        player.giveItem(upgrades.upgrade1)
+        world.sendEntityMessage(player.id(), "setMechUpgradeItem1", nil)
+      end
+      if upgrades.upgrade1 then
+        player.giveItem(upgrades.upgrade1)
+        world.sendEntityMessage(player.id(), "setMechUpgradeItem2", nil)
+      end
+      if upgrades.upgrade3 then
+        player.giveItem(upgrades.upgrade3)
+        world.sendEntityMessage(player.id(), "setMechUpgradeItem3", nil)
+      end
+    elseif currentItem and expansion then
+      if currentItem.name == "mechchipexpansion2" then
+        if upgrades.upgrade3 then
+          player.giveItem(upgrades.upgrade3)
+          world.sendEntityMessage(player.id(), "setMechUpgradeItem3", nil)
+        end
+      elseif currentItem.name == "mechchipexpansion1" then
+        if upgrades.upgrade1 then
+          player.giveItem(upgrades.upgrade1)
+          world.sendEntityMessage(player.id(), "setMechUpgradeItem2", nil)
+        end
+        if upgrades.upgrade3 then
+          player.giveItem(upgrades.upgrade3)
+          world.sendEntityMessage(player.id(), "setMechUpgradeItem3", nil)
+        end
+      end
+    end
+
+    self.itemChanged = true
+  end
 end
 
 function swapItem(widgetName)
@@ -90,6 +233,7 @@ function swapItem(widgetName)
   if not swapItem or self.partManager:partConfig(partType, swapItem) then
     player.setSwapSlotItem(currentItem)
     widget.setItemSlotItem(widgetName, swapItem)
+
     self.itemSet[partType] = swapItem
 
     itemSetChanged()
