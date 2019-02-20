@@ -1,0 +1,11 @@
+{
+  "itemName" : "mechchipdash",
+  "price" : 0,
+  "maxStack" : 1,
+  "rarity" : "Common",
+  "category" : "mechChip",
+  "inventoryIcon" : "mechchipdash.png",
+  "description" : "Allows your mech do do a dash by double tapping left or right.",
+  "shortdescription" : "Escapist Module",
+  "itemTags" : [  ]
+}

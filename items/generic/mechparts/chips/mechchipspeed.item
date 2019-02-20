@@ -5,7 +5,7 @@
   "rarity" : "Common",
   "category" : "mechChip",
   "inventoryIcon" : "mechchipspeed.png",
-  "description" : "Increases mech component-given speed but lowers maneuverability and jump height.",
+  "description" : "Increases mech speed but lowers maneuverability and jump height.",
   "shortdescription" : "Voyager Module",
   "itemTags" : [  ]
 }

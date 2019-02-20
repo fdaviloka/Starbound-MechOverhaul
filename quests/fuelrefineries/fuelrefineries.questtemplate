@@ -1,0 +1,15 @@
+{
+    "id" : "fuelrefineriesslots",
+    "title" : "quest for saving refineries item slots.",
+    "text" : "Go with the player.",
+    "completionText" : "Should never be completed, nor fail!",
+	"conditions" : [],
+	"rewards" : [],
+	"followUp" : "fuelrefineriesslots",
+    "moneyRange" : [0, 0],
+    "canBeAbandoned" : false,
+    "invisible" : true,
+    "logOnly" : true,
+    "updateDelta" : 10,
+    "script" : "/quests/fuelrefineries/fuelrefineries.lua"
+}

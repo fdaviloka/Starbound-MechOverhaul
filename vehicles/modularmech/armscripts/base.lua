@@ -150,3 +150,15 @@ function MechArm:fire()
 
   return projectileIds
 end
+
+function MechArm:setArmPower(value)
+  if self.projectileParameters then
+    self.projectileParameters.power = value
+  end
+end
+
+function MechArm:getArmPower(value)
+  if self.projectileParameters then
+    return self.projectileParameters.power
+  end
+end

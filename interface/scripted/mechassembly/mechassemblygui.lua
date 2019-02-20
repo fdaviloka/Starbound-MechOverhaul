@@ -78,6 +78,11 @@ function init()
   widget.setImage("imgPrimaryColorPreview", colorPreviewImage(self.primaryColorIndex))
   widget.setImage("imgSecondaryColorPreview", colorPreviewImage(self.secondaryColorIndex))
 
+  self.chips = {}
+  self.chipsMessage = world.sendEntityMessage(player.id(), "getMechUpgradeItems")
+  self.chips = self.chipsMessage:result()
+  self.chipsMessage = nil
+
   updatePreview()
   updateComplete()
 end
@@ -91,7 +96,8 @@ function update(dt)
   end
   if self.chipsMessage and self.chipsMessage:finished() then
     if self.chipsMessage:succeeded() then
-      local chips = self.chipsMessage:result()
+      self.chips = self.chipsMessage:result()
+      local chips = self.chips
       widget.setItemSlotItem("itemSlot_upgrade1", chips.chip1)
       widget.setItemSlotItem("itemSlot_upgrade2", chips.chip2)
       widget.setItemSlotItem("itemSlot_upgrade3", chips.chip3)
@@ -135,6 +141,7 @@ function update(dt)
     end
     self.chipsMessage = nil
     self.itemChanged = false
+    itemSetChanged()
   end
 
 end
@@ -372,8 +379,10 @@ function updatePreview()
     widget.setVisible("lblEnergy", true)
     widget.setVisible("lblDrain", true)
 
-    local healthMax = params.parts.body.energyMax + params.parts.body.healthBonus
-    local speedPenaltyPercent = (params.parts.body.speedNerf or 0) * 100
+    params = MechPartManager.calculateTotalMass(params, self.chips)
+
+    local healthMax = params.parts.body.healthMax + params.parts.body.healthBonus
+    local speedPenaltyPercent = math.floor((params.parts.body.speedNerf or 0) * 100)
     local energyMax = params.parts.body.energyMax
     local energyDrain = params.parts.body.energyDrain + params.parts.leftArm.energyDrain + params.parts.rightArm.energyDrain
 	  energyDrain = energyDrain * 0.6

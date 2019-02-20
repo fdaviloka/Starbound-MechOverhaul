@@ -88,6 +88,7 @@ function MechPartManager:new()
   newPartManager.paletteConfig = root.assetJson("/vehicles/modularmech/mechpalettes.config")
 
   setmetatable(newPartManager, extend(self))
+
   return newPartManager
 end
 
@@ -178,6 +179,16 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
     params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
   end
 
+  if params.parts.body then
+    params.parts.body.healthMax = params.parts.body.energyMax
+  end
+
+  params = MechPartManager.calculateTotalMass(params)
+
+  return params
+end
+
+function MechPartManager.calculateTotalMass(params, chips)
   local partContext = {}
   partContext.protection = params.parts.body and params.parts.body.protection or 0
   partContext.power = params.parts.leftArm and params.parts.leftArm.power or 0
@@ -198,8 +209,105 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
   mass = mass + (params.parts.rightArm and params.parts.rightArm.massValue or 0)
   mass = mass + (params.parts.booster and params.parts.booster.massValue or 0)
   mass = mass + (params.parts.legs and params.parts.legs.massValue or 0)
+
   if params.parts.body then params.parts.body.totalMass = mass end
 
+  params = MechPartManager.calculateBonuses(params)
+
+  if chips then
+    for _,chip in pairs(chips) do
+      if chip.name == "mechchiphealth" then
+        params.parts.body.totalMass = params.parts.body.totalMass * 1.2
+        params.parts.body.healthBonus  = params.parts.body.healthBonus * 1.6
+      end
+      if chip.name == "mechchipspeed" then
+        params.parts.legs.groundSpeed  = params.parts.legs.groundSpeed * 1.4
+        params.parts.legs.groundControlForce = params.parts.legs.groundControlForce * 1.3
+        params.parts.booster.airControlSpeed = params.parts.booster.airControlSpeed * 1.4
+        params.parts.booster.flightControlSpeed = params.parts.booster.flightControlSpeed * 1.3
+
+        params.parts.legs.jumpVelocity = params.parts.legs.jumpVelocity * 0.7
+        params.parts.booster.airControlForce = params.parts.booster.airControlForce * 0.6
+        params.parts.booster.flightControlForce = params.parts.booster.flightControlForce * 0.6
+      end
+      if chip.name == "mechchipfeather" then
+        params.parts.body.totalMass = params.parts.body.totalMass * 0.85
+        local protection = params.parts.body.protection
+
+        if protection == 0.682 then
+          params.parts.body.protection = 0.635
+        elseif protection == 0.716 then
+          params.parts.body.protection = 0.675
+        elseif protection == 0.760 then
+          params.parts.body.protection = 0.705
+        elseif protection == 0.808 then
+          params.parts.body.protection = 0.755
+        elseif protection == 0.846 then
+          params.parts.body.protection = 0.800
+        elseif protection == 0.877 then
+          params.parts.body.protection = 0.840
+        elseif protection == 0.902 then
+          params.parts.body.protection = 0.872
+        elseif protection == 0.921 then
+          params.parts.body.protection = 0.897
+        elseif protection == 0.937 then
+          params.parts.body.protection = 0.915
+        elseif protection == 0.950 then
+          params.parts.body.protection = 0.932
+        end
+      end
+
+      if chip.name == "mechchipdefense" then
+        params.parts.body.totalMass = params.parts.body.totalMass * 1.15
+        local protection = params.parts.body.protection
+
+        if protection == 0.682 then
+          params.parts.body.protection = 0.712
+        elseif protection == 0.716 then
+          params.parts.body.protection = 0.765
+        elseif protection == 0.760 then
+          params.parts.body.protection = 0.812
+        elseif protection == 0.808 then
+          params.parts.body.protection = 0.851
+        elseif protection == 0.846 then
+          params.parts.body.protection = 0.882
+        elseif protection == 0.877 then
+          params.parts.body.protection = 0.907
+        elseif protection == 0.902 then
+          params.parts.body.protection = 0.924
+        elseif protection == 0.921 then
+          params.parts.body.protection = 0.940
+        elseif protection == 0.937 then
+          params.parts.body.protection = 0.953
+        elseif protection == 0.950 then
+          params.parts.body.protection = 0.962
+        end
+      end
+
+      if chip.name == "mechchipfuel" then
+        params.parts.body.energyMax = params.parts.body.energyMax * 1.5
+        params.parts.body.healthMax = params.parts.body.healthMax * 0.75
+      end
+
+      if chip.name == "mechchipcontrol" then
+        params.parts.legs.groundSpeed  = params.parts.legs.groundSpeed * 0.9
+        params.parts.legs.groundControlForce = params.parts.legs.groundControlForce * 0.9
+        params.parts.booster.airControlSpeed = params.parts.booster.airControlSpeed * 0.9
+        params.parts.booster.flightControlSpeed = params.parts.booster.flightControlSpeed * 0.9
+
+        params.parts.legs.jumpVelocity = params.parts.legs.jumpVelocity * 1.3
+        params.parts.booster.airControlForce = params.parts.booster.airControlForce * 1.3
+        params.parts.booster.flightControlForce = params.parts.booster.flightControlForce * 1.3
+      end
+    end
+
+    params = MechPartManager.calculateBonuses(params, chips)
+  end
+
+  return params
+end
+
+function MechPartManager.calculateBonuses(params, chips)
   --calculating health bonus, speed penalty and energy drain penalty based on mass and protection
   --Mech body protection values
   --level3: 760
@@ -209,9 +317,9 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
   --level7: 902
   if params.parts.body then
     local initialBonus = 10
-    local maxHealthBonus = params.parts.body.energyMax * 0.5
-    local initialMass = 12
-    local maxMass = 18
+    local maxHealthBonus = params.parts.body.healthMax * 0.5
+    local initialMass = 10
+    local maxMass = 20
 
     local sec = (maxHealthBonus - initialBonus) / (maxMass - initialMass)
     sec = sec * (params.parts.body.totalMass - initialMass) + initialBonus
@@ -219,18 +327,22 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
     if params.parts.body.protection < 0.760 then
       healthBonus = math.floor(sec)
     end
+    if healthBonus < 0 then healthBonus = 0 end
     params.parts.body.healthBonus = healthBonus
 
     local initialNerf = 0.01
     local maxNerf = 0.4
     initialMass = 15
-    maxMass = 18
+    maxMass = 20
 
     local sec = (maxNerf - initialNerf) / (maxMass - initialMass)
     sec = sec * (params.parts.body.totalMass - initialMass) + initialNerf
     if sec < 0 then sec = 0 end
+    if sec > 0.7 then sec = 0.7 end
     params.parts.body.speedNerf = math.floor(sec * 100) / 100
 
+    initialMass = 15
+    maxMass = 22
     initialNerf = 0.01
     maxNerf = 0.35
 
@@ -243,6 +355,18 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
     energyDrain = math.floor(energyDrain * 100) / 100
     if energyDrain < 0 then energyDrain = 0 end
     params.parts.body.energyPenalty = energyDrain
+  end
+
+  if chips then
+    for _,chip in pairs(chips) do
+      if chip.name == "mechchippower" then
+        params.parts.body.energyPenalty = params.parts.body.energyPenalty + 0.35
+      end
+
+      if chip.name == "mechchiplight" then
+        params.parts.body.energyPenalty = params.parts.body.energyPenalty + 0.05
+      end
+    end
   end
 
   return params

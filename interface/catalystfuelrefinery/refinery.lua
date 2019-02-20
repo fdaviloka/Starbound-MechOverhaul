@@ -1,6 +1,10 @@
 function init()
   self.playerId = player.id()
 
+  if not player.hasQuest("fuelrefineriesslots") then
+    player.startQuest( { questId = "fuelrefineriesslots" , templateId = "fuelrefineriesslots", parameters = {}} )
+  end
+
   self.itemsLeft = 0
   self.timer = 0
   self.maxTimer = 15
@@ -105,7 +109,7 @@ function swapItem(widgetName, output, inputItem, message)
         swapItem.count = itemCount
       end
     end
-    
+
     player.setSwapSlotItem(currentItem)
     widget.setItemSlotItem(widgetName, swapItem)
   elseif not swapItem and not output then

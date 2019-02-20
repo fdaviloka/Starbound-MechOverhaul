@@ -1,5 +1,6 @@
 require "/scripts/vec2.lua"
 require "/scripts/util.lua"
+require "/vehicles/modularmech/mechpartmanager.lua"
 
 function init()
 
@@ -32,6 +33,13 @@ function init()
 
   self.ownerUuid = config.getParameter("ownerUuid")
   self.ownerEntityId = config.getParameter("ownerEntityId")
+
+  --setting current chips
+  local chipsMessage = world.sendEntityMessage(self.ownerEntityId, "getMechUpgradeItems")
+  self.chips = chipsMessage:result()
+  self.chip1 = self.chips.chip1 and self.chips.chip1.name or nil
+  self.chip2 = self.chips.chip2 and self.chips.chip2.name or nil
+  self.chip3 = self.chips.chip3 and self.chips.chip3.name or nil
 
   -- initialize configuration parameters
 
@@ -112,6 +120,11 @@ function init()
 
   self.parts = config.getParameter("parts")
 
+  local params = {}
+  params.parts = self.parts
+  params = MechPartManager.calculateTotalMass(params, self.chips)
+  self.parts = params.parts
+
   -- setup body
 
   self.protection = self.parts.body.protection
@@ -144,7 +157,7 @@ function init()
 
   -- setup energy pool --modded
   --set up health pool
-  self.healthMax = self.parts.body.energyMax + self.parts.body.healthBonus
+  self.healthMax = self.parts.body.healthMax + self.parts.body.healthBonus
   storage.health = storage.health or (config.getParameter("startHealthRatio", 1.0) * self.healthMax)
 
   self.energyMax = self.parts.body.energyMax
@@ -243,6 +256,29 @@ function init()
 end
 
 function update(dt)
+  --chips setup
+  for _,chip in pairs(self.chips) do
+    if chip.name == "mechchippower" and not self.powerBuffApplied then
+      local leftPower = self.leftArm:getArmPower()
+      if leftPower then
+        leftPower = leftPower * 2
+        self.leftArm:setArmPower(leftPower)
+      end
+
+      local rightPower = self.rightArm:getArmPower()
+      if rightPower then
+        rightPower = rightPower * 2
+        self.rightArm:setArmPower(rightPower)
+      end
+      self.powerBuffApplied = true
+    end
+
+    if chip.name == "mechchiplight" and not self.lightSet then
+      animator.setLightActive("mechChipLight", true)
+      self.lightSet = true
+    end
+  end
+
   -- despawn if owner has left the world
   if not self.ownerEntityId or world.entityType(self.ownerEntityId) ~= "player" then
     despawn()
@@ -408,7 +444,7 @@ function update(dt)
 		      self.manualFlightMode = false
 		    end
 
-		    if self.manualFlightMode and mcontroller.yVelocity() < 0 and mcontroller.isColliding() then
+		    if self.manualFlightMode and mcontroller.yVelocity() > 0 and mcontroller.isColliding() then
           self.manualFlightMode = false
           setFlightMode(false)
         end
@@ -416,7 +452,7 @@ function update(dt)
 		    if not hasTouched(newControls) and not hasTouched(oldControls) and self.manualFlightMode then
 		      local vel = mcontroller.velocity()
             if vel[1] ~= 0 or vel[2] ~= 0 then
-              mcontroller.approachVelocity({0, 0}, self.flightControlForce*2)
+              mcontroller.approachVelocity({0, 0}, self.flightControlForce*1.5)
               boost(vec2.mul(vel, -1))
             end
 	    	end
@@ -619,16 +655,7 @@ function update(dt)
 -- lpk - regen while idle, no drain while coasting
   if self.driverId then
 	--energy drain
-    local energyDrain = self.energyDrain
-
-	  --set energy drain x2 on manual flight mode
-	  if self.flightMode and world.gravity(mcontroller.position()) == 0 then
-	    energyDrain = self.energyDrain
-	  elseif self.flightMode and world.gravity(mcontroller.position()) ~= 0 then
-	    energyDrain = self.energyDrain*2
-  	elseif not self.flightMode and world.gravity(mcontroller.position()) ~= 0 then
-	    energyDrain = self.energyDrain
-  	end
+   local energyDrain = self.energyDrain
 
 	--set energy drain to 0 if null movement
     if not hasTouched(newControls) and not hasTouched(oldControls) and not self.manualFlightMode then --(not hasFired) then

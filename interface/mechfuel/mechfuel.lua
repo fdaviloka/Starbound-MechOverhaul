@@ -25,10 +25,13 @@ function init()
   end
 
   self.effeciencySet = false
+  self.fuels = config.getParameter("fuels")
+  self.fuelTypes = config.getParameter("fuelTypes")
 end
 
 function update(dt)
   if self.disabled then return end
+  if not world.entityExists(player.id()) then return end
 
   if not self.currentFuelMessage then
     local id = player.id()
@@ -112,18 +115,10 @@ function fuel()
   local fuelMultiplier = 1
   local localFuelType = ""
 
-  if item.name == "liquidoil" then
-    fuelMultiplier = 0.5
-    localFuelType = "Oil"
-  elseif item.name == "liquidfuel" or item.name == "solidfuel" then
-    fuelMultiplier = 1
-    localFuelType = "Erchius"
-  elseif item.name == "liquidmechfuel" then
-    fuelMultiplier = 2
-    localFuelType = "Mech fuel"
-  elseif item.name == "unrefinedliquidmechfuel" then
-    fuelMultiplier = 1.5
-    localFuelType = "Unrefined"
+  local fuelData = self.fuels[item.name]
+  if fuelData then
+    fuelMultiplier = fuelData.fuelMultiplier
+    localFuelType = fuelData.fuelType
   end
 
   if self.currentFuelType and localFuelType ~= self.currentFuelType then
@@ -151,11 +146,7 @@ end
 function swapItem(widgetName)
   local currentItem = widget.itemSlotItem(widgetName)
   local swapItem = player.swapSlotItem()
-  if swapItem and not (swapItem.name == "liquidfuel"
-  or swapItem.name == "solidfuel"
-  or swapItem.name == "liquidoil"
-  or swapItem.name == "liquidmechfuel"
-  or swapItem.name == "unrefinedliquidmechfuel") then
+  if swapItem and not self.fuels[swapItem.name] then
     return
   end
 
@@ -188,17 +179,14 @@ function setEfficiencyText(currentItem)
     return
   end
 
-  if currentItem.name == "liquidfuel" or currentItem.name == "solidfuel" then
-    widget.setText("lblEfficiency", "Detected fuel type: ^#bf2fe2;Erchius^white;, Efficiency: full")
-  elseif currentItem.name == "liquidoil" then
-    widget.setText("lblEfficiency", "Detected fuel type: ^gray;Oil^white;, Efficiency: half")
-  elseif currentItem.name == "liquidmechfuel" then
-    widget.setText("lblEfficiency", "Detected fuel type: ^yellow;Mech fuel^white;, Efficiency: double")
-  elseif currentItem.name == "unrefinedliquidmechfuel" then
-    widget.setText("lblEfficiency", "Detected fuel type: ^orange;Unrefined fuel^white;, Efficiency: 1.5")
-  else
-    widget.setText("lblEfficiency", "")
-  end
+  local fuelData = self.fuels[currentItem.name]
+  local fuelMultiplier = fuelData.fuelMultiplier
+  local fuelType = fuelData.fuelType
+  local textColor = fuelData.textColor
+
+  if not fuelData or not fuelMultiplier or not fuelType or not textColor then return end
+
+  widget.setText("lblEfficiency", "Detected fuel type: ^" .. textColor .. ";" .. fuelType .. "^white;, Efficiency: x".. fuelMultiplier)
 end
 
 function fuelCountPreview(item)
@@ -210,18 +198,11 @@ function fuelCountPreview(item)
   local fuelMultiplier = 1
   local textColor = "white"
 
-  if item.name == "liquidoil" then
-    fuelMultiplier = 0.5
-    textColor = "gray"
-  elseif item.name == "liquidfuel" then
-    fuelMultiplier = 1
-    textColor = "#bf2fe2"
-  elseif item.name == "liquidmechfuel" then
-    fuelMultiplier = 2
-    textColor = "yellow"
-  elseif item.name == "unrefinedliquidmechfuel" then
-    fuelMultiplier = 1.5
-    textColor = "orange"
+  local fuelData = self.fuels[item.name]
+
+  if fuelData then
+    fuelMultiplier = fuelData.fuelMultiplier
+    textColor = fuelData.textColor
   end
 
   local addFuelCount = self.currentFuel + (item.count * fuelMultiplier)
@@ -234,17 +215,17 @@ function fuelCountPreview(item)
 end
 
 function setFuelTypeText(type)
-  local textColor = ""
-  if type == "Oil" then
-    textColor = "gray"
-  elseif type == "Erchius" then
-    textColor = "#bf2fe2"
-  elseif type == "Mech fuel" then
-    textColor = "yellow"
-  elseif type == "Unrefined" then
-    textColor = "orange"
-  else
-    textColor = nil
+  local textColor = "white"
+
+  local fuelType = self.fuelTypes[type]
+
+  if fuelType then
+    textColor = fuelType.textColor
+  end
+
+  if not type then
+    type = "EMPTY"
+    textColor = "red"
   end
 
   if textColor then

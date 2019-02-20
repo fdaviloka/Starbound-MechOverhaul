@@ -1,0 +1,11 @@
+{
+  "itemName" : "mechchiplight",
+  "price" : 0,
+  "maxStack" : 1,
+  "rarity" : "Common",
+  "category" : "mechChip",
+  "inventoryIcon" : "mechchiplight.png",
+  "description" : "A bright light for your mech. Drains energy.",
+  "shortdescription" : "Shining Module",
+  "itemTags" : [  ]
+}

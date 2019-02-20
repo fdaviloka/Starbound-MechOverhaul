@@ -48,90 +48,6 @@ function init()
 	  return storage.fuelType
   end)
 
-  --refinery code
-  message.setHandler("setRefineryInputItem", function(_, _, value)
-	  storage.rInputItemSlot = value
-  end)
-
-  message.setHandler("getRefineryInputItem", function()
-	  return storage.rInputItemSlot
-  end)
-
-  message.setHandler("setRefineryOutputItem", function(_, _, value)
-	  storage.rOutputItemSlot = value
-  end)
-
-  message.setHandler("getRefineryOutputItem", function()
-	  return storage.rOutputItemSlot
-  end)
-
-  message.setHandler("setCatalystInputItem1", function(_, _, value)
-	  storage.cInputItemSlot1 = value
-  end)
-
-  message.setHandler("setCatalystInputItem2", function(_, _, value)
-	  storage.cInputItemSlot2 = value
-  end)
-
-  message.setHandler("getCatalystInputItem1", function()
-	  return storage.cInputItemSlot1
-  end)
-
-  message.setHandler("getCatalystInputItem2", function()
-    return storage.cInputItemSlot2
-  end)
-
-  message.setHandler("setCatalystOutputItem", function(_, _, value)
-	  storage.cOutputItemSlot = value
-  end)
-
-  message.setHandler("getCatalystOutputItem", function()
-	  return storage.cOutputItemSlot
-  end)
-
-  --chip code
-  message.setHandler("setMechExpansionSlotItem", function(_, _, value)
-	  storage.expansionSlotItem = value
-  end)
-
-  message.setHandler("getMechExpansionSlotItem", function()
-	  return storage.expansionSlotItem
-  end)
-
-  message.setHandler("setMechUpgradeItem1", function(_, _, value)
-	  storage.upgradeItem1 = value
-  end)
-
-  message.setHandler("getMechUpgradeItem1", function()
-	  return storage.upgradeItem1
-  end)
-
-  message.setHandler("setMechUpgradeItem2", function(_, _, value)
-	  storage.upgradeItem2 = value
-  end)
-
-  message.setHandler("getMechUpgradeItem2", function()
-	  return storage.upgradeItem2
-  end)
-
-  message.setHandler("setMechUpgradeItem3", function(_, _, value)
-	  storage.upgradeItem3 = value
-  end)
-
-  message.setHandler("getMechUpgradeItem3", function()
-	  return storage.upgradeItem3
-  end)
-
-  message.setHandler("getMechUpgradeItems", function()
-	  local chips = {}
-    chips.chip1 = storage.upgradeItem1
-    chips.chip2 = storage.upgradeItem2
-    chips.chip3 = storage.upgradeItem3
-    chips.expansion = storage.expansionSlotItem
-    return chips
-  end)
-  --end
-
   if not storage.currentMaxFuel then
     storage.currentMaxFuel = 0
   end
@@ -142,6 +58,32 @@ function init()
 end
 
 function update(dt)
+  if storage.currentMaxFuel and storage.lastMaxFuel and storage.fuelType then
+    if storage.currentMaxFuel < storage.lastMaxFuel and storage.fuelCount == storage.lastMaxFuel then
+      local itemName = ""
+
+      if storage.fuelType == "Oil" then
+        itemName = "liquidoil"
+      elseif storage.fuelType == "Erchius" then
+        itemName = "liquidfuel"
+      elseif storage.fuelType == "Unrefined" then
+        itemName = "unrefinedliquidmechfuel"
+      elseif storage.fuelType == "Mech fuel" then
+        itemName = "liquidmechfuel"
+      end
+
+      local itemCount = storage.lastMaxFuel - storage.currentMaxFuel
+
+      if itemName and itemCount then
+        local item = {}
+        item.name = itemName
+        item.count = itemCount
+        player.giveItem(item)
+      end
+    end
+  end
+
+  storage.lastMaxFuel = storage.currentMaxFuel
 
   if storage.currentMaxFuel and storage.fuelCount then
     if storage.fuelCount > storage.currentMaxFuel then

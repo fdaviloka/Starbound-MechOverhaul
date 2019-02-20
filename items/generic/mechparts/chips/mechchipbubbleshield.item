@@ -1,0 +1,11 @@
+{
+  "itemName" : "mechchipbubbleshield",
+  "price" : 0,
+  "maxStack" : 1,
+  "rarity" : "Common",
+  "category" : "mechChip",
+  "inventoryIcon" : "mechchipbubbleshield.png",
+  "description" : "Gives your mech a energy shield that absorbs damage and recharges with time. Raises fuel consumption.",
+  "shortdescription" : "Bulwark Module",
+  "itemTags" : [  ]
+}

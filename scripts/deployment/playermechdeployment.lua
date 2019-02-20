@@ -79,6 +79,10 @@ function init()
     player.startQuest( { questId = "fuelDataQuest" , templateId = "fuelDataQuest", parameters = {}} )
   end
 
+  if not player.hasQuest("mechchipslots") then
+    player.startQuest( { questId = "mechchipslots" , templateId = "mechchipslots", parameters = {}} )
+  end
+
   self.unlocked = status.statusProperty("mechUnlocked", false)
   self.itemSet = status.statusProperty("mechItemSet", {})
   self.primaryColorIndex = status.statusProperty("mechPrimaryColorIndex", 0)
@@ -151,6 +155,10 @@ end
 function setMechItemSet(newItemSet)
   self.itemSet = self.partManager:validateItemSet(newItemSet)
   status.setStatusProperty("mechItemSet", self.itemSet)
+
+  local chipsMessage = world.sendEntityMessage(player.id(), "getMechUpgradeItems")
+  self.chips = chipsMessage:result()
+  
   buildMechParameters()
 end
 
@@ -326,6 +334,9 @@ function buildMechParameters(itemSet, primaryColorIndex, secondaryColorIndex)
   if self.partManager:itemSetComplete(itemSet) then
     self.mechParameters = self.partManager:buildVehicleParameters(itemSet, primaryColorIndex, secondaryColorIndex)
     self.mechParameters.ownerUuid = player.uniqueId()
+    if self.chips then
+      self.mechParameters = MechPartManager.calculateTotalMass(self.mechParameters, self.chips)
+    end
   else
     self.mechParameters = nil
   end
