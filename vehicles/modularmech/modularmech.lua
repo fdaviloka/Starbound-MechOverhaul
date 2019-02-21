@@ -234,6 +234,11 @@ function init()
   self.doubleJumpCount = 0
   self.doubleJumpDelay = 0
 
+  --dash values
+  self.maxDashDist = 20
+  self.doubleDirCount = 0
+  self.doubleDirDelay = 0
+
   self.crouch = 0.0 -- 0.0 ~ 1.0
   self.crouchTarget = 0.0
   self.crouchCheckMax = 7.0
@@ -271,11 +276,6 @@ function update(dt)
         self.rightArm:setArmPower(rightPower)
       end
       self.powerBuffApplied = true
-    end
-
-    if chip.name == "mechchiplight" and not self.lightSet then
-      animator.setLightActive("mechChipLight", true)
-      self.lightSet = true
     end
   end
 
@@ -428,13 +428,13 @@ function update(dt)
 
       if newControls.Special1 and not self.lastControls.Special1 and storage.energy > 0 then
         animator.playSound("horn")
-      end
 
-      if newControls.Special2 then
-        mcontroller.setYVelocity(50)
-      end
-      if newControls.Special3 then
-        mcontroller.setYVelocity(-50)
+        for _,chip in pairs(self.chips) do
+          if chip.name == "mechchiplight" then
+            self.mechLightActive = not self.mechLightActive
+            animator.setLightActive("mechChipLight", self.mechLightActive)
+          end
+        end
       end
 
       if self.flightMode then
@@ -615,6 +615,30 @@ function update(dt)
   end
   --end
 
+  --dash code
+  if newControls.left and not oldControls.left then
+    self.doubleDirCount = self.doubleDirCount - 1
+    self.doubleDirDelay = self.doubleTabCheckDelayTime
+  end
+
+  if newControls.right and not oldControls.right then
+    self.doubleDirCount = self.doubleDirCount + 1
+    self.doubleDirDelay = self.doubleTabCheckDelayTime
+  end
+
+  if self.doubleDirCount >= 2 or self.doubleDirCount <= -2 then
+    animator.setParticleEmitterActive("dashParticles", true)
+    self.doubleDirCount = 0
+  else
+    --animator.setParticleEmitterActive("dashParticles", false)
+  end
+
+  self.doubleDirDelay = self.doubleDirDelay - dt
+  if self.doubleDirDelay < 0 then
+    self.doubleDirCount = 0
+  end
+  --end
+
   --crouch code is here
   if storage.energy > 0 then
     self.crouch = self.crouch + (self.crouchTarget - self.crouch) * 0.1
@@ -704,6 +728,17 @@ function update(dt)
       animator.playSound("energyout")
       self.energyOutPlayed = true
     end
+    animator.setLightActive("mechChipLight", false)
+
+    for _, arm in pairs({"left", "right"}) do
+      local fireControl = (arm == "left") and "PrimaryFire" or "AltFire"
+
+      animator.resetTransformationGroup(arm .. "Arm")
+      animator.resetTransformationGroup(arm .. "ArmFlipper")
+
+      self[arm .. "Arm"]:updateBase(dt, self.driverId, false, false, self.aimPosition, self.facingDirection, self.crouch * self.bodyCrouchMax)
+      self[arm .. "Arm"]:update(dt)
+    end
 	  return
   else
     self.energyOutPlayed = false
@@ -713,6 +748,10 @@ function update(dt)
       animator.setAnimationState("power", "activate")
       animator.playSound("energyback")
       self.energyBackPlayed = true
+    end
+
+    if self.mechLightActive then
+      animator.setLightActive("mechChipLight", true)
     end
   end
 
@@ -1128,4 +1167,40 @@ function hasTouched(controls)
     if control then return true end
   end
   return false
+end
+
+--target position for dash
+function findTargetPosition(dir, maxDist)
+  local dist = 1
+  local targetPosition
+  local collisionPoly = mcontroller.collisionPoly()
+  local testPos = mcontroller.position()
+  while dist <= maxDist do
+    testPos[1] = testPos[1] + dir
+    if not world.polyCollision(collisionPoly, testPos, {"Null", "Block", "Dynamic", "Slippery"}) then
+      local oneDown = {testPos[1], testPos[2] - 1}
+      if not world.polyCollision(collisionPoly, oneDown, {"Null", "Block", "Dynamic", "Platform"}) and not self.flightMode then
+        testPos = oneDown
+      end
+    else
+      local oneUp = {testPos[1], testPos[2] + 1}
+      if not world.polyCollision(collisionPoly, oneUp, {"Null", "Block", "Dynamic", "Slippery"}) then
+        testPos = oneUp
+      else
+        break
+      end
+    end
+    targetPosition = testPos
+    dist = dist + 1
+  end
+
+  if targetPosition then
+    local towardGround = {testPos[1], testPos[2] - 0.8}
+    local groundPosition = world.resolvePolyCollision(collisionPoly, towardGround, 0.8, {"Null", "Block", "Dynamic", "Platform"})
+    if groundPosition and not (groundPosition[1] == towardGround[1] and groundPosition[2] == towardGround[2]) then
+      targetPosition = groundPosition
+    end
+  end
+
+  return targetPosition
 end

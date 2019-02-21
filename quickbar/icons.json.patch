@@ -7,5 +7,15 @@
       "pane": "/interface/mechfuel/mechfuel.config",
       "icon": "/interface/mechfuel/icon.png"
     }
+  },
+
+  {
+    "op": "add",
+    "path": "/normal/-",
+    "value": {
+      "label": "Mech status",
+      "pane": "/interface/mechstats/mechstats.config",
+      "icon": "/interface/mechstats/icon.png"
+    }
   }
 ]
