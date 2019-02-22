@@ -12,14 +12,24 @@ previewStates = {
 }
 
 function init()
+  local mechParamsMessage = world.sendEntityMessage(player.id(), "getMechParams")
+  local mechParams = mechParamsMessage:result()
+
   local getUnlockedMessage = world.sendEntityMessage(player.id(), "mechUnlocked")
   if getUnlockedMessage:finished() and getUnlockedMessage:succeeded() then
     local unlocked = getUnlockedMessage:result()
-    if not unlocked then
+    if not mechParams and unlocked and testeste then
       self.disabled = true
-      
+      widget.setText("lblStatus", "^red;Build incomplete")
+      widget.setVisible("imgDisabledOverlay", true)
+      return
+    elseif not unlocked and testeste then
+      self.disabled = true
+      widget.setText("lblStatus", "^red;Unauthorized user")
+      widget.setVisible("imgDisabledOverlay", true)
+      return
     else
-
+      widget.setVisible("imgDisabledOverlay", false)
     end
   end
 
@@ -59,16 +69,67 @@ function init()
     widget.setItemSlotItem("itemSlot_" .. chipName, itemDescriptor)
   end
 
+  self.loadoutsChanged = true
+
   updatePreview()
 end
 
 function update(dt)
+  if self.disabled then return end
 
+  if not self.loadoutsMessage and self.loadoutsChanged then
+    self.loadoutsMessage = world.sendEntityMessage(player.id(), "getLoadouts")
+  end
+
+  if self.loadoutsMessage and self.loadoutsMessage:finished() then
+    if self.loadoutsMessage:succeeded() then
+      self.loadouts = self.loadoutsMessage:result()
+
+      local loadoutNum = self.loadouts.currentLoadout or 1
+      widget.setSelectedOption("radioLoadouts", self.loadouts.currentLoadout)
+      if loadoutNum == 1 then
+        world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout1)
+        self.itemSet = self.loadouts.loadout1
+      elseif loadoutNum == 2 then
+        world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout2)
+        self.itemSet = self.loadouts.loadout2
+      elseif loadoutNum == 3 then
+        world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout3)
+        self.itemSet = self.loadouts.loadout3
+      end
+
+      for partType,_ in pairs({rightArm = "", leftArm = "", body = "", booster = "", legs = ""}) do
+        widget.setItemSlotItem("itemSlot_" .. partType, nil)
+      end
+
+      if self.itemSet then
+        for partType, itemDescriptor in pairs(self.itemSet) do
+          widget.setItemSlotItem("itemSlot_" .. partType, itemDescriptor)
+        end
+      end
+
+      updatePreview()
+    end
+    self.loadoutsMessage = nil
+    self.loadoutsChanged = nil
+  end
+end
+
+function changeLoadout()
+  local selected = widget.getSelectedOption("radioLoadouts")
+  if not selected then return end
+
+  world.sendEntityMessage(player.id(), "setCurrentLoadout", selected)
+
+  self.loadoutsChanged = true
 end
 
 function updatePreview()
+  if self.disabled then return end
+
   -- assemble vehicle and animation config
   local params = self.partManager:buildVehicleParameters(self.itemSet, self.primaryColorIndex, self.secondaryColorIndex)
+  params = MechPartManager.calculateBonuses(params, self.chips)
   local animationConfig = root.assetJson("/vehicles/modularmech/modularmech.animation")
   util.mergeTable(animationConfig, params.animationCustom)
 
@@ -124,6 +185,7 @@ function updatePreview()
   end
 
   if self.partManager:itemSetComplete(self.itemSet) then
+    params = MechPartManager.calculateTotalMass(params, self.chips)
 
     local healthMax = params.parts.body.healthMax + params.parts.body.healthBonus
     local speedPenaltyPercent = math.floor((params.parts.body.speedNerf or 0) * 100)
@@ -133,9 +195,27 @@ function updatePreview()
     energyDrain = energyDrain + params.parts.body.energyPenalty
     local mass = params.parts.body.totalMass
 
+    widget.setVisible("lblHealth", true)
+    widget.setVisible("lblEnergy", true)
+    widget.setVisible("lblDrain", true)
+    widget.setVisible("lblHealthBonus", true)
+    widget.setVisible("lblSpeedPenalty", true)
+    widget.setVisible("lblEnergyPenalty", true)
+
     widget.setText("lblHealth", string.format("Health: %d", healthMax))
     widget.setText("lblEnergy", string.format("Fuel: %d", energyMax))
     widget.setText("lblDrain", string.format("Fuel usage: %.02f F/s", energyDrain))
+    widget.setText("lblMass", string.format("Mech mass: %.01f t", mass))
+    widget.setText("lblHealthBonus", string.format("Mass health bonus: %d", params.parts.body.healthBonus))
+    widget.setText("lblSpeedPenalty", "Mass speed penalty: -" .. speedPenaltyPercent .. "%")
+    widget.setText("lblEnergyPenalty", string.format("Mass drain penalty: %.02f F/s", params.parts.body.energyPenalty))
 
+  else
+    widget.setVisible("lblHealth", false)
+    widget.setVisible("lblEnergy", false)
+    widget.setVisible("lblDrain", false)
+    widget.setVisible("lblHealthBonus", false)
+    widget.setVisible("lblSpeedPenalty", false)
+    widget.setVisible("lblEnergyPenalty", false)
   end
 end

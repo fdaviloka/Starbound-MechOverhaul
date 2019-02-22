@@ -615,7 +615,7 @@ function update(dt)
   end
   --end
 
-  --dash code
+  --dash code--to be implemented
   if newControls.left and not oldControls.left then
     self.doubleDirCount = self.doubleDirCount - 1
     self.doubleDirDelay = self.doubleTabCheckDelayTime
@@ -627,10 +627,9 @@ function update(dt)
   end
 
   if self.doubleDirCount >= 2 or self.doubleDirCount <= -2 then
-    animator.setParticleEmitterActive("dashParticles", true)
-    self.doubleDirCount = 0
+
   else
-    --animator.setParticleEmitterActive("dashParticles", false)
+
   end
 
   self.doubleDirDelay = self.doubleDirDelay - dt

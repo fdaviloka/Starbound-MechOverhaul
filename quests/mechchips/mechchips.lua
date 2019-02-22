@@ -40,6 +40,13 @@ function init()
     chips.expansion = storage.expansionSlotItem
     return chips
   end)
+
+  message.setHandler("setMechUpgradeItems", function(_, _, value)
+	  storage.upgradeItem1 = value.chip1
+    storage.upgradeItem2 = value.chip2
+    storage.upgradeItem3 = value.chip3
+    storage.expansionSlotItem = value.expansion
+  end)
   --end
 
 

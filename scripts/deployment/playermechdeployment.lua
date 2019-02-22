@@ -83,6 +83,10 @@ function init()
     player.startQuest( { questId = "mechchipslots" , templateId = "mechchipslots", parameters = {}} )
   end
 
+  if not player.hasQuest("mechloadoutsdata") then
+    player.startQuest( { questId = "mechloadoutsdata" , templateId = "mechloadoutsdata", parameters = {}} )
+  end
+
   self.unlocked = status.statusProperty("mechUnlocked", false)
   self.itemSet = status.statusProperty("mechItemSet", {})
   self.primaryColorIndex = status.statusProperty("mechPrimaryColorIndex", 0)
@@ -158,8 +162,19 @@ function setMechItemSet(newItemSet)
 
   local chipsMessage = world.sendEntityMessage(player.id(), "getMechUpgradeItems")
   self.chips = chipsMessage:result()
-  
+
   buildMechParameters()
+
+  local loadoutMessage = world.sendEntityMessage(player.id(), "getLoadouts")
+  local loadouts = loadoutMessage:result()
+
+  if loadouts then
+    if loadouts.currentLoadout then
+      world.sendEntityMessage(player.id(), "setLoadout" .. loadouts.currentLoadout, newItemSet)
+    else
+      world.sendEntityMessage(player.id(), "setLoadout1")
+    end
+  end
 end
 
 function setMechColorIndexes(primaryIndex, secondaryIndex)

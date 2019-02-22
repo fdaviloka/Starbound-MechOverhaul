@@ -78,36 +78,5 @@
 	    "position" : [0, 0],
 	    "color" : [236, 204, 128]
 		}
-	},
-
-	{
-		"op" : "add",
-		"path" : "/animatedParts/stateTypes/dashing",
-		"value" :
-		{
-			"default" : "off",
-      "states" :
-			{
-        "off" : {},
-        "on" : {}
-      }
-		}
-	},
-
-	{
-		"op" : "add",
-		"path" : "/particleEmitters/dashParticles",
-		"value" :
-		{
-			"emissionRate" : 40.0,
-      "particles" :
-			[
-        {
-          "particle" : "mechdash",
-          "flip" : true,
-					"offset" : [-1, 1]
-        }
-      ]
-		}
 	}
 ]
