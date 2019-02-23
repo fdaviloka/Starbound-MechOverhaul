@@ -6,5 +6,5 @@
   "shortdescription" : "Unrefined Fuel",
   "description" : "Unrefined mech fuel obtained from primitive oil.",
 
-  "liquid" : "mechfuel"
+  "liquid" : "unrefinedmechfuel"
 }

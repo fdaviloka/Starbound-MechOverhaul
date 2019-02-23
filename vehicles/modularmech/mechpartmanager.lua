@@ -244,7 +244,6 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
   end
 
   mass = math.floor(mass * 10) / 10
-  params.parts.body.totalMass = mass
   --end
 
   --calculating health bonus and speed nerf based on mass and protection
@@ -255,6 +254,8 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
   --level6: 877
   --level7: 902
   if params.parts.body then
+    params.parts.body.totalMass = mass
+
     local initialBonus = 10
     local maxHealthBonus = params.parts.body.energyMax * 0.5
     local initialMass = 12
