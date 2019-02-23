@@ -26,6 +26,14 @@ function init()
     return loadouts
   end)
 
+  message.setHandler("setMechLoadoutItemSetChanged", function(_, _, value)
+    storage.itemSetChanged = value
+  end)
+
+  message.setHandler("getMechLoadoutItemSetChanged", function()
+    return storage.itemSetChanged
+  end)
+
   if not storage.currentLoadout then
     storage.currentLoadout = 1
   end

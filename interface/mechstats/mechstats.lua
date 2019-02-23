@@ -98,6 +98,8 @@ function update(dt)
         self.itemSet = self.loadouts.loadout3
       end
 
+      world.sendEntityMessage(player.id(), "setMechLoadoutItemSetChanged", true)
+
       for partType,_ in pairs({rightArm = "", leftArm = "", body = "", booster = "", legs = ""}) do
         widget.setItemSlotItem("itemSlot_" .. partType, nil)
       end

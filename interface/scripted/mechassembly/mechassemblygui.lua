@@ -90,6 +90,20 @@ end
 function update(dt)
   if self.disabled then return end
 
+  if not self.itemSetChangedMessage then
+    self.itemSetChangedMessage = world.sendEntityMessage(player.id(), "getMechLoadoutItemSetChanged")
+  end
+  if self.itemSetChangedMessage and self.itemSetChangedMessage:finished() then
+    if self.itemSetChangedMessage:succeeded() then
+      local itemSetChanged = self.itemSetChangedMessage:result()
+      if itemSetChanged then
+        remoteItemSetChanged()
+        world.sendEntityMessage(player.id(), "setMechLoadoutItemSetChanged", false)
+      end
+    end
+    self.itemSetChangedMessage = nil
+  end
+
   --update item slots based on dummy quest
   if not self.chipsMessage and self.itemChanged then
     self.chipsMessage = world.sendEntityMessage(player.id(), "getMechUpgradeItems")
@@ -245,6 +259,27 @@ function swapItem(widgetName)
 
     itemSetChanged()
   end
+end
+
+function remoteItemSetChanged()
+  self.itemSet = {}
+  local getItemSetMessage = world.sendEntityMessage(player.id(), "getMechItemSet")
+  if getItemSetMessage:finished() and getItemSetMessage:succeeded() then
+    self.itemSet = getItemSetMessage:result()
+
+    for partType,_ in pairs({rightArm = "", leftArm = "", body = "", booster = "", legs = ""}) do
+      widget.setItemSlotItem("itemSlot_" .. partType, nil)
+    end
+
+    for partType, itemDescriptor in pairs(self.itemSet) do
+      widget.setItemSlotItem("itemSlot_" .. partType, itemDescriptor)
+    end
+  else
+    sb.logError("Mech assembly interface unable to fetch player mech parts!")
+  end
+
+  updatePreview()
+  updateComplete()
 end
 
 function itemSetChanged()
