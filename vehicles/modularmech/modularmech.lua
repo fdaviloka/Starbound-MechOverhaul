@@ -35,7 +35,10 @@ function init()
   self.ownerEntityId = config.getParameter("ownerEntityId")
 
   --setting current chips
-  local chipsMessage = world.sendEntityMessage(self.ownerEntityId, "getMechUpgradeItems")
+  local currentLoadoutMessage = world.sendEntityMessage(self.ownerEntityId, "getCurrentLoadout")
+  self.currentLoadout = currentLoadoutMessage:result() or 1
+
+  local chipsMessage = world.sendEntityMessage(self.ownerEntityId, "getChips" .. self.currentLoadout)
   self.chips = chipsMessage:result()
   self.chip1 = self.chips.chip1 and self.chips.chip1.name or nil
   self.chip2 = self.chips.chip2 and self.chips.chip2.name or nil

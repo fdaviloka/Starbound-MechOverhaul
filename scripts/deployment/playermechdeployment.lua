@@ -35,8 +35,8 @@ function init()
   end)
 
 
-  message.setHandler("setMechItemSet", function(_, _, newItemSet)
-      setMechItemSet(newItemSet)
+  message.setHandler("setMechItemSet", function(_, _, newItemSet, chips)
+      setMechItemSet(newItemSet, chips)
     end)
 
   message.setHandler("getMechColorIndexes", function()
@@ -156,24 +156,22 @@ function init()
   --player.interact("ScriptPane", "/interface/mechfuel/mechfuel.config", storage.vehicleId)
 end
 
-function setMechItemSet(newItemSet)
+function setMechItemSet(newItemSet, chips)
   self.itemSet = self.partManager:validateItemSet(newItemSet)
   status.setStatusProperty("mechItemSet", self.itemSet)
 
-  local chipsMessage = world.sendEntityMessage(player.id(), "getMechUpgradeItems")
+  local currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
+  local loadoutNum = currentLoadoutMessage:result() or 1
+
+  local chipsMessage = world.sendEntityMessage(player.id(), "getChips" .. loadoutNum)
   self.chips = chipsMessage:result()
 
   buildMechParameters()
 
-  local loadoutMessage = world.sendEntityMessage(player.id(), "getLoadouts")
-  local loadouts = loadoutMessage:result()
-
-  if loadouts then
-    if loadouts.currentLoadout then
-      world.sendEntityMessage(player.id(), "setLoadout" .. loadouts.currentLoadout, newItemSet)
-    else
-      world.sendEntityMessage(player.id(), "setLoadout1")
-    end
+  if loadoutNum then
+    world.sendEntityMessage(player.id(), "setLoadout" .. loadoutNum, newItemSet, chips)
+  else
+    world.sendEntityMessage(player.id(), "setLoadout1", newItemSet, chips)
   end
 end
 

@@ -5,7 +5,7 @@
   "rarity" : "Common",
   "category" : "mechPart",
   "inventoryIcon" : "mechchipexpansion3.png",
-  "description" : "test",
-  "shortdescription" : "Chip Slot Expansion MKIII",
+  "description" : "The most advanced slot expansion available on the market. Enables all three mech expansion slots.",
+  "shortdescription" : "Module Slot Expansion MKIII",
   "itemTags" : [ ]
 }

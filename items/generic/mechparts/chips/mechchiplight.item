@@ -5,7 +5,7 @@
   "rarity" : "Common",
   "category" : "mechChip",
   "inventoryIcon" : "mechchiplight.png",
-  "description" : "A bright light for your mech. Drains energy.",
+  "description" : "A bright light for your mech. Drains energy. Can be toggled by the horn button.",
   "shortdescription" : "Shining Module",
   "itemTags" : [  ]
 }

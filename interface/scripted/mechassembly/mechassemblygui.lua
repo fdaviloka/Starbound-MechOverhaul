@@ -78,10 +78,7 @@ function init()
   widget.setImage("imgPrimaryColorPreview", colorPreviewImage(self.primaryColorIndex))
   widget.setImage("imgSecondaryColorPreview", colorPreviewImage(self.secondaryColorIndex))
 
-  self.chips = {}
-  self.chipsMessage = world.sendEntityMessage(player.id(), "getMechUpgradeItems")
-  self.chips = self.chipsMessage:result()
-  self.chipsMessage = nil
+  self.itemChanged = true
 
   updatePreview()
   updateComplete()
@@ -104,14 +101,30 @@ function update(dt)
     self.itemSetChangedMessage = nil
   end
 
+  if not self.currentLoadoutMessage then
+    self.currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
+  end
+
+  if self.currentLoadoutMessage and self.currentLoadoutMessage:finished() then
+    if self.currentLoadoutMessage:succeeded() then
+      self.currentLoadout = self.currentLoadoutMessage:result()
+    end
+
+    self.currentLoadoutMessage = nil
+  end
+
   --update item slots based on dummy quest
-  if not self.chipsMessage and self.itemChanged then
-    self.chipsMessage = world.sendEntityMessage(player.id(), "getMechUpgradeItems")
+  if not self.chipsMessage and self.currentLoadout and self.itemChanged then
+    self.chipsMessage = world.sendEntityMessage(player.id(), "getChips" .. self.currentLoadout)
   end
   if self.chipsMessage and self.chipsMessage:finished() then
     if self.chipsMessage:succeeded() then
       self.chips = self.chipsMessage:result()
+      if not self.chips then
+        self.chips = {}
+      end
       local chips = self.chips
+
       widget.setItemSlotItem("itemSlot_upgrade1", chips.chip1)
       widget.setItemSlotItem("itemSlot_upgrade2", chips.chip2)
       widget.setItemSlotItem("itemSlot_upgrade3", chips.chip3)
@@ -163,28 +176,28 @@ end
 function setExpansion()
   if self.disabled then return end
 
-  swapItemChips("itemSlot_expansion", true, "setMechExpansionSlotItem")
+  swapItemChips("itemSlot_expansion", true, "expansion")
 end
 
 function setChip1()
   if self.disabled then return end
 
-  swapItemChips("itemSlot_upgrade1", false, "setMechUpgradeItem1")
+  swapItemChips("itemSlot_upgrade1", false, "1")
 end
 
 function setChip2()
   if self.disabled then return end
 
-  swapItemChips("itemSlot_upgrade2", false, "setMechUpgradeItem2")
+  swapItemChips("itemSlot_upgrade2", false, "2")
 end
 
 function setChip3()
   if self.disabled then return end
 
-  swapItemChips("itemSlot_upgrade3", false, "setMechUpgradeItem3")
+  swapItemChips("itemSlot_upgrade3", false, "3")
 end
 
-function swapItemChips(slotName, expansion, messageName)
+function swapItemChips(slotName, expansion, chipName)
   if self.disabled then return end
 
   local currentItem = widget.itemSlotItem(slotName)
@@ -204,37 +217,49 @@ function swapItemChips(slotName, expansion, messageName)
     player.setSwapSlotItem(currentItem)
     widget.setItemSlotItem(slotName, swapItem)
 
-    world.sendEntityMessage(player.id(), messageName, swapItem)
+    if chipName ~= "expansion" then
+      self.chips["chip" .. chipName] = swapItem
+    else
+      self.chips["expansion"] = swapItem
+    end
+
+    world.sendEntityMessage(player.id(), "setChips" .. self.currentLoadout, self.chips)
 
     currentItem = widget.itemSlotItem("itemSlot_expansion")
 
     if not currentItem and expansion then
       if upgrades.upgrade1 then
         player.giveItem(upgrades.upgrade1)
-        world.sendEntityMessage(player.id(), "setMechUpgradeItem1", nil)
+        self.chips.chip1 = nil
+        world.sendEntityMessage(player.id(), "setChips" .. self.currentLoadout , self.chips)
       end
-      if upgrades.upgrade1 then
-        player.giveItem(upgrades.upgrade1)
-        world.sendEntityMessage(player.id(), "setMechUpgradeItem2", nil)
+      if upgrades.upgrade2 then
+        player.giveItem(upgrades.upgrade2)
+        self.chips.chip2 = nil
+        world.sendEntityMessage(player.id(), "setChips" .. self.currentLoadout , self.chips)
       end
       if upgrades.upgrade3 then
         player.giveItem(upgrades.upgrade3)
-        world.sendEntityMessage(player.id(), "setMechUpgradeItem3", nil)
+        self.chips.chip3 = nil
+        world.sendEntityMessage(player.id(), "setChips" .. self.currentLoadout , self.chips)
       end
     elseif currentItem and expansion then
       if currentItem.name == "mechchipexpansion2" then
         if upgrades.upgrade3 then
           player.giveItem(upgrades.upgrade3)
-          world.sendEntityMessage(player.id(), "setMechUpgradeItem3", nil)
+          self.chips.chip3 = nil
+          world.sendEntityMessage(player.id(), "setChips" .. self.currentLoadout , self.chips)
         end
       elseif currentItem.name == "mechchipexpansion1" then
         if upgrades.upgrade1 then
           player.giveItem(upgrades.upgrade1)
-          world.sendEntityMessage(player.id(), "setMechUpgradeItem2", nil)
+          self.chips.chip1 = nil
+          world.sendEntityMessage(player.id(), "setChips" .. self.currentLoadout , self.chips)
         end
         if upgrades.upgrade3 then
           player.giveItem(upgrades.upgrade3)
-          world.sendEntityMessage(player.id(), "setMechUpgradeItem3", nil)
+          self.chips.chip3 = nil
+          world.sendEntityMessage(player.id(), "setChips" .. self.currentLoadout , self.chips)
         end
       end
     end
@@ -278,12 +303,14 @@ function remoteItemSetChanged()
     sb.logError("Mech assembly interface unable to fetch player mech parts!")
   end
 
+  self.itemChanged = true
+
   updatePreview()
   updateComplete()
 end
 
 function itemSetChanged()
-  world.sendEntityMessage(player.id(), "setMechItemSet", self.itemSet)
+  world.sendEntityMessage(player.id(), "setMechItemSet", self.itemSet, self.chips)
   updatePreview()
   updateComplete()
 end

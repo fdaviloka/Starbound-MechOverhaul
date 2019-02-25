@@ -18,15 +18,11 @@ function init()
   local getUnlockedMessage = world.sendEntityMessage(player.id(), "mechUnlocked")
   if getUnlockedMessage:finished() and getUnlockedMessage:succeeded() then
     local unlocked = getUnlockedMessage:result()
-    if not mechParams and unlocked and testeste then
-      self.disabled = true
-      widget.setText("lblStatus", "^red;Build incomplete")
-      widget.setVisible("imgDisabledOverlay", true)
-      return
-    elseif not unlocked and testeste then
+    if not unlocked then
       self.disabled = true
       widget.setText("lblStatus", "^red;Unauthorized user")
       widget.setVisible("imgDisabledOverlay", true)
+      widget.setVisible("radioLoadouts", false)
       return
     else
       widget.setVisible("imgDisabledOverlay", false)
@@ -60,15 +56,6 @@ function init()
     widget.setItemSlotItem("itemSlot_" .. partType, itemDescriptor)
   end
 
-  self.chips = {}
-  self.chipsMessage = world.sendEntityMessage(player.id(), "getMechUpgradeItems")
-  self.chips = self.chipsMessage:result()
-  self.chipsMessage = nil
-
-  for chipName, itemDescriptor in pairs(self.chips) do
-    widget.setItemSlotItem("itemSlot_" .. chipName, itemDescriptor)
-  end
-
   self.loadoutsChanged = true
 
   updatePreview()
@@ -86,19 +73,32 @@ function update(dt)
       self.loadouts = self.loadoutsMessage:result()
 
       local loadoutNum = self.loadouts.currentLoadout or 1
+
+      self.chips = self.loadouts["chips" .. loadoutNum]
+
       widget.setSelectedOption("radioLoadouts", self.loadouts.currentLoadout)
       if loadoutNum == 1 then
-        world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout1)
+        world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout1, self.chips)
         self.itemSet = self.loadouts.loadout1
       elseif loadoutNum == 2 then
-        world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout2)
+        world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout2, self.chips)
         self.itemSet = self.loadouts.loadout2
       elseif loadoutNum == 3 then
-        world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout3)
+        world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout3, self.chips)
         self.itemSet = self.loadouts.loadout3
       end
 
       world.sendEntityMessage(player.id(), "setMechLoadoutItemSetChanged", true)
+
+      for chipName,_ in pairs({chip1 = "", chip2 = "", chip3 = "", expansion = ""}) do
+        widget.setItemSlotItem("itemSlot_" .. chipName, nil)
+      end
+
+      if self.chips then
+        for chipName, itemDescriptor in pairs(self.chips) do
+          widget.setItemSlotItem("itemSlot_" .. chipName, itemDescriptor)
+        end
+      end
 
       for partType,_ in pairs({rightArm = "", leftArm = "", body = "", booster = "", legs = ""}) do
         widget.setItemSlotItem("itemSlot_" .. partType, nil)

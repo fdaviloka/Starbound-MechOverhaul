@@ -5,7 +5,7 @@
   "rarity" : "Common",
   "category" : "mechPart",
   "inventoryIcon" : "mechchipexpansion2.png",
-  "description" : "test",
-  "shortdescription" : "Chip Slot Expansion MKII",
+  "description" : "Upgraded version of the chip slot expansion. Now enables two mech module slots.",
+  "shortdescription" : "Module Slot Expansion MKII",
   "itemTags" : [ ]
 }

@@ -5,7 +5,7 @@
   "rarity" : "Common",
   "category" : "mechPart",
   "inventoryIcon" : "mechchipexpansion1.png",
-  "description" : "test",
-  "shortdescription" : "Chip Slot Expansion",
+  "description" : "A simple expansion that enables one mech module slot.",
+  "shortdescription" : "Module Slot Expansion",
   "itemTags" : [ ]
 }
