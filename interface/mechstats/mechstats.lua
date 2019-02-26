@@ -12,6 +12,15 @@ previewStates = {
 }
 
 function init()
+  local openMessage = world.sendEntityMessage(player.id(), "isMechStatsOpen")
+  local open = openMessage:result()
+  if open then
+    pane.dismiss()
+    return
+  else
+    world.sendEntityMessage(player.id(), "setMechStatsOpen", true)
+  end
+
   local mechParamsMessage = world.sendEntityMessage(player.id(), "getMechParams")
   local mechParams = mechParamsMessage:result()
 
@@ -61,8 +70,14 @@ function init()
   updatePreview()
 end
 
+function close()
+  world.sendEntityMessage(player.id(), "setMechStatsOpen", false)
+  pane.dismiss()
+end
+
 function update(dt)
   if self.disabled then return end
+  if not world.entityExists(player.id()) then return end
 
   if not self.loadoutsMessage and self.loadoutsChanged then
     self.loadoutsMessage = world.sendEntityMessage(player.id(), "getLoadouts")
@@ -86,6 +101,10 @@ function update(dt)
       elseif loadoutNum == 3 then
         world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout3, self.chips)
         self.itemSet = self.loadouts.loadout3
+      end
+
+      if not self.itemSet then
+        self.itemSet = {}
       end
 
       world.sendEntityMessage(player.id(), "setMechLoadoutItemSetChanged", true)
@@ -193,7 +212,7 @@ function updatePreview()
     local speedPenaltyPercent = math.floor((params.parts.body.speedNerf or 0) * 100)
     local energyMax = params.parts.body.energyMax
     local energyDrain = params.parts.body.energyDrain + params.parts.leftArm.energyDrain + params.parts.rightArm.energyDrain
-	  energyDrain = energyDrain * 0.6
+	  --energyDrain = energyDrain * 0.6
     energyDrain = energyDrain + params.parts.body.energyPenalty
     local mass = params.parts.body.totalMass
 

@@ -447,7 +447,7 @@ function updatePreview()
     local speedPenaltyPercent = math.floor((params.parts.body.speedNerf or 0) * 100)
     local energyMax = params.parts.body.energyMax
     local energyDrain = params.parts.body.energyDrain + params.parts.leftArm.energyDrain + params.parts.rightArm.energyDrain
-	  energyDrain = energyDrain * 0.6
+	  --energyDrain = energyDrain * 0.6
     energyDrain = energyDrain + params.parts.body.energyPenalty
     local mass = params.parts.body.totalMass
 

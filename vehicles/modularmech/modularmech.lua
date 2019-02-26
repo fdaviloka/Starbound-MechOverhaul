@@ -40,6 +40,10 @@ function init()
 
   local chipsMessage = world.sendEntityMessage(self.ownerEntityId, "getChips" .. self.currentLoadout)
   self.chips = chipsMessage:result()
+  if not self.chips then
+    self.chips = {}
+  end
+
   self.chip1 = self.chips.chip1 and self.chips.chip1.name or nil
   self.chip2 = self.chips.chip2 and self.chips.chip2.name or nil
   self.chip3 = self.chips.chip3 and self.chips.chip3.name or nil
@@ -167,7 +171,7 @@ function init()
   storage.energy = 0
 
   self.energyDrain = self.parts.body.energyDrain + (self.parts.leftArm.energyDrain or 0) + (self.parts.rightArm.energyDrain or 0)
-  self.energyDrain = self.energyDrain*0.6
+  --self.energyDrain = self.energyDrain*0.6
   --adding mass energy drain penalty
   self.energyDrain = self.energyDrain + (self.parts.body.energyPenalty or 0)
   --end
