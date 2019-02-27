@@ -2,10 +2,10 @@ require "/scripts/util.lua"
 require "/scripts/vec2.lua"
 
 function init()
-  local getUnlockedMessage = world.sendEntityMessage(player.id(), "mechUnlocked")
-  local mechParamsMessage = world.sendEntityMessage(player.id(), "getMechParams")
-  if getUnlockedMessage:finished() and getUnlockedMessage:succeeded()
-  and mechParamsMessage:finished() and mechParamsMessage:succeeded() then
+  local playerId = player.id()
+  local getUnlockedMessage = world.sendEntityMessage(playerId, "mechUnlocked")
+  local mechParamsMessage = world.sendEntityMessage(playerId, "getMechParams")
+  if getUnlockedMessage:finished() and getUnlockedMessage:succeeded() and mechParamsMessage:finished() and mechParamsMessage:succeeded() then
     local unlocked = getUnlockedMessage:result()
     local mechParams = mechParamsMessage:result()
     if not unlocked or not mechParams then
@@ -16,7 +16,7 @@ function init()
       self.disabled = true
       widget.setVisible("imgLockedOverlay", true)
       widget.setButtonEnabled("btnUpgrade", false)
-	    widget.setText("lblLocked", label)
+      widget.setText("lblLocked", label)
     else
       widget.setVisible("imgLockedOverlay", false)
     end
@@ -25,66 +25,79 @@ function init()
   end
 
   self.effeciencySet = false
+
+  self.fuelsById = {
+    liquidoil = { multiplier = 1.0, name = "Oil", textColor = "gray" },
+    liquidfuel = { multiplier = 1.8, name = "Erchius", textColor = "#bf2fe2" },
+    solidfuel = { multiplier = 3.6, name = "Erchius", textColor = "#bf2fe2" },
+    unrefinedliquidmechfuel = { multiplier = 4.0, name = "Unrefined Fuel", textColor = "orange" },
+    liquidmechfuel = { multiplier = 8.0, name = "Mech Fuel", textColor = "yellow" }
+  }
+  self.fuelColorsByName = {}
+  for _, v in pairs(self.fuelsById) do
+    self.fuelColorsByName[v.name] = v.textColor
+  end
 end
 
 function update(dt)
   if self.disabled then return end
 
+  local playerId = player.id()
+  -- If the dialog is open during beaming, there's a chance player.id
+  -- returns 0, which segfaults world.sendEntityMessage.
+  if playerId == 0 then return end
+
   if not self.currentFuelMessage then
-    local id = player.id()
-    self.currentFuelMessage = world.sendEntityMessage(id, "getQuestFuelCount")
+    self.currentFuelMessage = world.sendEntityMessage(playerId, "getQuestFuelCount")
   end
 
   if self.currentFuelMessage and self.currentFuelMessage:finished() then
     if self.currentFuelMessage:succeeded() then
-	  self.currentFuel = self.currentFuelMessage:result()
-	end
-	self.currentFuelMessage = nil
+      self.currentFuel = self.currentFuelMessage:result()
+    end
+    self.currentFuelMessage = nil
   end
 
   if not self.maxFuelMessage then
-    local id = player.id()
-    self.maxFuelMessage = world.sendEntityMessage(id, "getMechParams")
+    self.maxFuelMessage = world.sendEntityMessage(playerId, "getMechParams")
   end
 
   if self.maxFuelMessage and self.maxFuelMessage:finished() then
     if self.maxFuelMessage:succeeded() then
-	    if self.maxFuelMessage:result() then
-	      local params = self.maxFuelMessage:result()
-	      self.maxFuel = params.parts.body.energyMax
-	    end
-	  end
+      if self.maxFuelMessage:result() then
+        local params = self.maxFuelMessage:result()
+        self.maxFuel = math.floor(params.parts.body.energyMax)
+      end
+    end
   end
 
   if self.maxFuel and self.currentFuel then
-    widget.setText("lblModuleCount", string.format("%.02f", self.currentFuel) .. " / " .. math.floor(self.maxFuel))
+    widget.setText("lblModuleCount", string.format("%.02f", self.currentFuel) .. " / " .. self.maxFuel)
   end
 
   if self.setItemMessage and self.setItemMessage:finished() then
-	  self.setItemMessage = nil
+    self.setItemMessage = nil
   end
 
   if not self.getItemMessage then
-    local id = player.id()
-    self.getItemMessage = world.sendEntityMessage(id, "getFuelSlotItem")
+    self.getItemMessage = world.sendEntityMessage(playerId, "getFuelSlotItem")
   end
   if self.getItemMessage and self.getItemMessage:finished() then
     if self.getItemMessage:succeeded() then
       local item = self.getItemMessage:result()
-	    widget.setItemSlotItem("itemSlot_fuel", item)
+      widget.setItemSlotItem("itemSlot_fuel", item)
       fuelCountPreview(item)
 
       if not self.efficiencySet then
         setEfficiencyText(item)
         self.efficiencySet = true
       end
-	  end
-	  self.getItemMessage = nil
+    end
+    self.getItemMessage = nil
   end
 
   if not self.fuelTypeMessage then
-    local id = player.id()
-    self.fuelTypeMessage = world.sendEntityMessage(id, "getFuelType")
+    self.fuelTypeMessage = world.sendEntityMessage(playerId, "getFuelType")
   end
   if self.fuelTypeMessage and self.fuelTypeMessage:finished() then
     if self.fuelTypeMessage:succeeded() then
@@ -107,55 +120,34 @@ function fuel()
 
   local item = widget.itemSlotItem("itemSlot_fuel")
   if not item then return end
-  local id = player.id()
 
-  local fuelMultiplier = 1
-  local localFuelType = ""
+  local fuelClass = self.fuelsById[item.name]
 
-  if item.name == "liquidoil" then
-    fuelMultiplier = 0.5
-    localFuelType = "Oil"
-  elseif item.name == "liquidfuel" or item.name == "solidfuel" then
-    fuelMultiplier = 1
-    localFuelType = "Erchius"
-  elseif item.name == "liquidmechfuel" then
-    fuelMultiplier = 2
-    localFuelType = "Mech fuel"
-  elseif item.name == "unrefinedliquidmechfuel" then
-    fuelMultiplier = 1.5
-    localFuelType = "Unrefined"
-  end
-
-  if self.currentFuelType and localFuelType ~= self.currentFuelType then
+  if self.currentFuelType and fuelClass.name ~= self.currentFuelType then
     widget.setText("lblEfficiency", "^red;The tank has a different type of fuel, empty it first.^white;")
     return
   end
 
-  local addFuelCount = self.currentFuel + (item.count * fuelMultiplier)
+  local addFuelCount = self.currentFuel + (item.count * fuelClass.multiplier)
 
+  local id = player.id()
   if addFuelCount > self.maxFuel then
-    item.count = addFuelCount - self.maxFuel
-	  if fuelMultiplier > 1 then
-      item.count = (addFuelCount - self.maxFuel) / fuelMultiplier
-    end
-	  self.setItemMessage = world.sendEntityMessage(id, "setFuelSlotItem", item)
-	  addFuelCount = self.maxFuel
+    item.count = math.floor((addFuelCount - self.maxFuel) / fuelClass.multiplier)
+    self.setItemMessage = world.sendEntityMessage(id, "setFuelSlotItem", item)
+    addFuelCount = self.maxFuel
   else
     self.setItemMessage = world.sendEntityMessage(id, "setFuelSlotItem", nil)
+    widget.setText("lblEfficiency", "")
   end
 
-  world.sendEntityMessage(id, "setFuelType", localFuelType)
+  world.sendEntityMessage(id, "setFuelType", fuelClass.name)
   world.sendEntityMessage(id, "setQuestFuelCount", addFuelCount)
 end
 
 function swapItem(widgetName)
   local currentItem = widget.itemSlotItem(widgetName)
   local swapItem = player.swapSlotItem()
-  if swapItem and not (swapItem.name == "liquidfuel"
-  or swapItem.name == "solidfuel"
-  or swapItem.name == "liquidoil"
-  or swapItem.name == "liquidmechfuel"
-  or swapItem.name == "unrefinedliquidmechfuel") then
+  if swapItem and not self.fuelsById[swapItem.name] then
     return
   end
 
@@ -188,17 +180,9 @@ function setEfficiencyText(currentItem)
     return
   end
 
-  if currentItem.name == "liquidfuel" or currentItem.name == "solidfuel" then
-    widget.setText("lblEfficiency", "Detected fuel type: ^#bf2fe2;Erchius^white;, Efficiency: full")
-  elseif currentItem.name == "liquidoil" then
-    widget.setText("lblEfficiency", "Detected fuel type: ^gray;Oil^white;, Efficiency: half")
-  elseif currentItem.name == "liquidmechfuel" then
-    widget.setText("lblEfficiency", "Detected fuel type: ^yellow;Mech fuel^white;, Efficiency: double")
-  elseif currentItem.name == "unrefinedliquidmechfuel" then
-    widget.setText("lblEfficiency", "Detected fuel type: ^orange;Unrefined fuel^white;, Efficiency: 1.5")
-  else
-    widget.setText("lblEfficiency", "")
-  end
+  local fuelClass = self.fuelsById[currentItem.name]
+
+  widget.setText("lblEfficiency", "Detected fuel type: ^" .. fuelClass.textColor .. ";" .. fuelClass.name .. "^white;, " .. "Efficiency: " .. string.format("%.01f", fuelClass.multiplier))
 end
 
 function fuelCountPreview(item)
@@ -207,49 +191,20 @@ function fuelCountPreview(item)
     return
   end
 
-  local fuelMultiplier = 1
-  local textColor = "white"
+  local fuelClass = self.fuelsById[item.name]
 
-  if item.name == "liquidoil" then
-    fuelMultiplier = 0.5
-    textColor = "gray"
-  elseif item.name == "liquidfuel" then
-    fuelMultiplier = 1
-    textColor = "#bf2fe2"
-  elseif item.name == "liquidmechfuel" then
-    fuelMultiplier = 2
-    textColor = "yellow"
-  elseif item.name == "unrefinedliquidmechfuel" then
-    fuelMultiplier = 1.5
-    textColor = "orange"
-  end
+  local addFuelCount = self.currentFuel + (item.count * fuelClass.multiplier)
+  if addFuelCount > self.maxFuel then addFuelCount = self.maxFuel end
 
-  local addFuelCount = self.currentFuel + (item.count * fuelMultiplier)
-
-  if addFuelCount > self.maxFuel then
-    addFuelCount = self.maxFuel
-  end
-
-  widget.setText("lblModuleCount", "^" .. textColor .. ";" .. string.format("%.02f", addFuelCount) .. "^white; / " .. math.floor(self.maxFuel))
+  widget.setText("lblModuleCount", "^" .. fuelClass.textColor .. ";" .. string.format("%.02f", addFuelCount) .. "^white; / " .. math.floor(self.maxFuel))
 end
 
 function setFuelTypeText(type)
-  local textColor = ""
-  if type == "Oil" then
-    textColor = "gray"
-  elseif type == "Erchius" then
-    textColor = "#bf2fe2"
-  elseif type == "Mech fuel" then
-    textColor = "yellow"
-  elseif type == "Unrefined" then
-    textColor = "orange"
-  else
-    textColor = nil
-  end
+  local textColor = self.fuelColorsByName[type]
 
   if textColor then
-    widget.setText("lblFuelType", "CURRENT FUEL TYPE: ^" .. textColor .. ";" .. type)
+    widget.setText("lblFuelType", "TYPE: ^" .. textColor .. ";" .. type)
   else
-    widget.setText("lblFuelType", "CURRENT FUEL TYPE: EMPTY")
+    widget.setText("lblFuelType", "TYPE: EMPTY")
   end
 end

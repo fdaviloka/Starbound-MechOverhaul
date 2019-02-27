@@ -31,8 +31,8 @@ function init()
     end)
 
   message.setHandler("getMechParams", function()
-	  return self.mechParameters
-  end)
+      return self.mechParameters
+    end)
 
 
   message.setHandler("setMechItemSet", function(_, _, newItemSet)
@@ -144,8 +144,6 @@ function init()
 
   -- block movement abilities during these ticks to avoid weirdness with techs, etc.
   status.setPersistentEffects("mechDeployment", {{stat = "activeMovementAbilities", amount = 1}})
-
-  --player.interact("ScriptPane", "/interface/mechfuel/mechfuel.config", storage.vehicleId)
 end
 
 function setMechItemSet(newItemSet)
@@ -167,7 +165,7 @@ function update(dt)
   --setting the max fuel count for arithmetics on dummy quest
   if self.mechParameters then
     local energyMax = self.mechParameters.parts.body.energyMax
-	  world.sendEntityMessage(self.playerId, "setCurrentMaxFuel", energyMax)
+    world.sendEntityMessage(self.playerId, "setCurrentMaxFuel", energyMax)
   end
 
   if self.deployTicks then
@@ -184,9 +182,9 @@ function update(dt)
           deploy(tempItemSet, tempPrimaryColorIndex, tempSecondaryColorIndex)
 
           --setting fuel for temp mech items
-		      local energyMax = self.mechParameters.parts.body.energyMax
-          world.sendEntityMessage(self.playerId, "setFuelType", "Mech fuel")
-		      world.sendEntityMessage(self.playerId, "setQuestFuelCount", energyMax)
+          local energyMax = self.mechParameters.parts.body.energyMax
+          world.sendEntityMessage(self.playerId, "setFuelType", "Mech Fuel")
+          world.sendEntityMessage(self.playerId, "setQuestFuelCount", energyMax)
           --end
 
           return true
@@ -231,18 +229,18 @@ function update(dt)
       self.energyCheck = nil
     end
 
-	--getting mech health from vehicle entity
-	if not self.healthCheck then
+    --getting mech health from vehicle entity
+    if not self.healthCheck then
       self.healthCheck = world.sendEntityMessage(storage.vehicleId, "currentHealth")
     end
 
-	if self.healthCheck and self.healthCheck:finished() then
+    if self.healthCheck and self.healthCheck:finished() then
       if self.healthCheck:succeeded() then
         self.mechHealthRatio = self.healthCheck:result()
       end
       self.healthCheck = nil
     end
-	--end
+    --end
   end
 
   --health bar variables
@@ -260,19 +258,19 @@ function update(dt)
         self.lowEnergyTimer = self.lowEnergyTime
       end
 
-	  --play low health sound
-	  if self.mechHealthRatio < self.lowHealthThreshold and self.lowHealthTimer == 0 then
-      localAnimator.playAudio(self.lowEnergySound)
-      self.lowHealthTimer = self.lowHealthTime
-    end
-	  --end
+      --play low health sound
+      if self.mechHealthRatio < self.lowHealthThreshold and self.lowHealthTimer == 0 then
+        localAnimator.playAudio(self.lowEnergySound)
+        self.lowHealthTimer = self.lowHealthTime
+      end
+      --end
 
-    drawEnergyBar()
-  	--draw health bar
-  	drawHealthBar()
-  	--end
-    drawEnemyIndicators()
-  end
+      drawEnergyBar()
+      --draw health bar
+      drawHealthBar()
+      --end
+      drawEnemyIndicators()
+    end
 
     if self.beaconPosition then
       self.beaconFlashTimer = (self.beaconFlashTimer + dt) % self.beaconFlashTime
@@ -287,7 +285,7 @@ function uninit()
   if inMech() then
     storage.inMechWithEnergyRatio = self.mechEnergyRatio
     --modded
-	  storage.inMechWithHealthRatio = self.mechHealthRatio
+    storage.inMechWithHealthRatio = self.mechHealthRatio
     --end
     storage.inMechWithWorldType = world.type()
   end
@@ -377,13 +375,13 @@ function drawEnergyBar()
   if fuelType == "Oil" then
     imageFrame = "/scripts/deployment/energybarframeoil.png"
     imageBar =  "/scripts/deployment/energybaroil.png"
-  elseif fuelType == "Mech fuel" then
+  elseif fuelType == "Mech Fuel" then
     imageFrame = "/scripts/deployment/energybarframemechfuel.png"
     imageBar =  "/scripts/deployment/energybarmechfuel.png"
   elseif fuelType == "Erchius" then
     imageFrame = "/scripts/deployment/energybarframe.png"
     imageBar =  "/scripts/deployment/energybar.png"
-  elseif fuelType == "Unrefined" then
+  elseif fuelType == "Unrefined Fuel" then
     imageFrame = "/scripts/deployment/energybarframeunrefinedfuel.png"
     imageBar =  "/scripts/deployment/energybarunrefinedfuel.png"
   else
