@@ -3,7 +3,7 @@
   "colonyTags" : ["commerce"],
   "rarity" : "Rare",
   "description" : "This distiller is used to produce unrefined mech fuel from oil.",
-  "shortdescription" : "^orange;Oil distiller^white;",
+  "shortdescription" : "^orange;Oil Distillery^white;",
   "subtitle" : "Convert Oil into Fuel",
   "race" : "generic",
   "category" : "crafting",

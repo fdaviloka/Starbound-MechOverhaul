@@ -206,7 +206,7 @@ function update(dt)
 
           --setting fuel for temp mech items
 		      local energyMax = self.mechParameters.parts.body.energyMax
-          world.sendEntityMessage(self.playerId, "setFuelType", "Mech fuel")
+          world.sendEntityMessage(self.playerId, "setFuelType", "Mech Fuel")
 		      world.sendEntityMessage(self.playerId, "setQuestFuelCount", energyMax)
           --end
 
@@ -227,6 +227,10 @@ function update(dt)
         end
       end
     end
+  end
+
+  if not storage.vehicleId then
+    world.sendEntityMessage(player.id(), "setMechDeployed", false)
   end
 
   if storage.vehicleId and world.entityType(storage.vehicleId) ~= "vehicle" then
@@ -327,6 +331,9 @@ function deploy(itemSet, primaryColorIndex, secondaryColorIndex)
   player.stopLounging()
 
   buildMechParameters(itemSet, primaryColorIndex, secondaryColorIndex)
+
+  if not self.mechParameters then return end
+
   self.mechParameters.ownerEntityId = self.playerId
   self.mechParameters.startEnergyRatio = storage.inMechWithEnergyRatio
   storage.inMechWithEnergyRatio = nil
@@ -336,6 +343,7 @@ function deploy(itemSet, primaryColorIndex, secondaryColorIndex)
   storage.inMechWithHealthRatio = nil
   --end
   storage.vehicleId = world.spawnVehicle("modularmech", spawnPosition(), self.mechParameters)
+  world.sendEntityMessage(player.id(), "setMechDeployed", true)
 
   player.lounge(storage.vehicleId)
 end
@@ -401,13 +409,13 @@ function drawEnergyBar()
   if fuelType == "Oil" then
     imageFrame = "/scripts/deployment/energybarframeoil.png"
     imageBar =  "/scripts/deployment/energybaroil.png"
-  elseif fuelType == "Mech fuel" then
+  elseif fuelType == "Mech Fuel" then
     imageFrame = "/scripts/deployment/energybarframemechfuel.png"
     imageBar =  "/scripts/deployment/energybarmechfuel.png"
   elseif fuelType == "Erchius" then
     imageFrame = "/scripts/deployment/energybarframe.png"
     imageBar =  "/scripts/deployment/energybar.png"
-  elseif fuelType == "Unrefined" then
+  elseif fuelType == "Unrefined Fuel" then
     imageFrame = "/scripts/deployment/energybarframeunrefinedfuel.png"
     imageBar =  "/scripts/deployment/energybarunrefinedfuel.png"
   else

@@ -54,13 +54,13 @@ function update(dt)
     if self.maxFuelMessage:succeeded() then
 	    if self.maxFuelMessage:result() then
 	      local params = self.maxFuelMessage:result()
-	      self.maxFuel = params.parts.body.energyMax
+	      self.maxFuel = math.floor(params.parts.body.energyMax)
 	    end
 	  end
   end
 
   if self.maxFuel and self.currentFuel then
-    widget.setText("lblModuleCount", string.format("%.02f", self.currentFuel) .. " / " .. math.floor(self.maxFuel))
+    widget.setText("lblModuleCount", string.format("%.02f", self.currentFuel) .. " / " .. self.maxFuel)
   end
 
   if self.setItemMessage and self.setItemMessage:finished() then
@@ -129,14 +129,12 @@ function fuel()
   local addFuelCount = self.currentFuel + (item.count * fuelMultiplier)
 
   if addFuelCount > self.maxFuel then
-    item.count = addFuelCount - self.maxFuel
-	  if fuelMultiplier > 1 then
-      item.count = (addFuelCount - self.maxFuel) / fuelMultiplier
-    end
+    item.count = math.floor((addFuelCount - self.maxFuel) / fuelMultiplier)
 	  self.setItemMessage = world.sendEntityMessage(id, "setFuelSlotItem", item)
 	  addFuelCount = self.maxFuel
   else
     self.setItemMessage = world.sendEntityMessage(id, "setFuelSlotItem", nil)
+    widget.setText("lblEfficiency", "")
   end
 
   world.sendEntityMessage(id, "setFuelType", localFuelType)
@@ -229,8 +227,8 @@ function setFuelTypeText(type)
   end
 
   if textColor then
-    widget.setText("lblFuelType", "CURRENT FUEL TYPE: ^" .. textColor .. ";" .. type)
+    widget.setText("lblFuelType", "FUEL TYPE: ^" .. textColor .. ";" .. type)
   else
-    widget.setText("lblFuelType", "CURRENT FUEL TYPE: EMPTY")
+    widget.setText("lblFuelType", "FUEL TYPE: EMPTY")
   end
 end

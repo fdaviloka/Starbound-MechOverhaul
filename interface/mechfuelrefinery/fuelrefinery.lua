@@ -2,11 +2,11 @@ require "/scripts/util.lua"
 require "/scripts/vec2.lua"
 
 function init()
-  self.playerId = player.id()
-
   if not player.hasQuest("fuelrefineriesslots") then
     player.startQuest( { questId = "fuelrefineriesslots" , templateId = "fuelrefineriesslots", parameters = {}} )
   end
+
+  self.playerId = player.id()
 
   self.timer = 0
   self.itemsLeft = 0
@@ -34,7 +34,6 @@ function update(dt)
     self.currentOutputItemMessage = nil
   end
 
-
   if self.itemsLeft > 0 then
     widget.setText("toggleCrafting", "Cancel")
     self.disable = true
@@ -43,7 +42,6 @@ function update(dt)
     if self.timer == self.maxTimer then
       self.timer = 0
       widget.setProgress("progressArrow", 0)
-      self.itemsLeft = self.itemsLeft - 1
       craftItem()
     end
   else
@@ -51,8 +49,6 @@ function update(dt)
     widget.setText("toggleCrafting", "Distill")
     widget.setProgress("progressArrow", 0)
   end
-
-
 end
 
 function refine()
@@ -63,9 +59,9 @@ function refine()
   end
 
   local item = widget.itemSlotItem("itemSlot_input")
-  if not item or (item and item.count == 1) then return end
+  if not item or item.count < 2 then return end
 
-  self.itemsLeft = math.floor(item.count * 0.5)
+  self.itemsLeft = math.floor(item.count / 2)
 end
 
 function insertFuel()
@@ -80,26 +76,34 @@ end
 
 function craftItem()
   local item = widget.itemSlotItem("itemSlot_input")
-
   local outputItem = widget.itemSlotItem("itemSlot_output")
 
-  if not outputItem then
-    outputItem = { name = "unrefinedliquidmechfuel", amount = 1 }
-  elseif outputItem and outputItem.count < 1000 then
-    outputItem.count = outputItem.count + 1
-  elseif outputItem and outputItem.count == 1000 then
+  if not item then
     self.itemsLeft = 0
     return
   end
 
   if item.count > 2 then
     item.count = item.count - 2
-  else
+  elseif item.count == 2 then
     item = nil
+  else
+    self.itemsLeft = 0
+    return
+  end
+
+  if not outputItem then
+    outputItem = { name = "unrefinedliquidmechfuel", amount = 1 }
+  elseif outputItem.count < 1000 then
+    outputItem.count = outputItem.count + 1
+  else
+    self.itemsLeft = 0
+    return
   end
 
   world.sendEntityMessage(self.playerId, "setRefineryInputItem", item)
   world.sendEntityMessage(self.playerId, "setRefineryOutputItem", outputItem)
+  self.itemsLeft = self.itemsLeft - 1
 end
 
 function swapItem(widgetName, output)

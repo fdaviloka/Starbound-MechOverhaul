@@ -12,15 +12,6 @@ previewStates = {
 }
 
 function init()
-  local openMessage = world.sendEntityMessage(player.id(), "isMechStatsOpen")
-  local open = openMessage:result()
-  if open then
-    pane.dismiss()
-    return
-  else
-    world.sendEntityMessage(player.id(), "setMechStatsOpen", true)
-  end
-
   local mechParamsMessage = world.sendEntityMessage(player.id(), "getMechParams")
   local mechParams = mechParamsMessage:result()
 
@@ -70,14 +61,30 @@ function init()
   updatePreview()
 end
 
-function close()
-  world.sendEntityMessage(player.id(), "setMechStatsOpen", false)
-  pane.dismiss()
-end
-
 function update(dt)
   if self.disabled then return end
   if not world.entityExists(player.id()) then return end
+
+  if not self.mechDeployedMessage then
+    self.mechDeployedMessage = world.sendEntityMessage(player.id(), "isMechDeployed")
+  end
+  if self.mechDeployedMessage and self.mechDeployedMessage:finished() then
+    if self.mechDeployedMessage:succeeded() then
+      self.mechDeployed = self.mechDeployedMessage:result()
+
+      if self.mechDeployed then
+        widget.setOptionEnabled("radioLoadouts", 1, false)
+        widget.setOptionEnabled("radioLoadouts", 2, false)
+        widget.setOptionEnabled("radioLoadouts", 3, false)
+      else
+        widget.setOptionEnabled("radioLoadouts", 1, true)
+        widget.setOptionEnabled("radioLoadouts", 2, true)
+        widget.setOptionEnabled("radioLoadouts", 3, true)
+      end
+    end
+
+    self.mechDeployedMessage = nil
+  end
 
   if not self.loadoutsMessage and self.loadoutsChanged then
     self.loadoutsMessage = world.sendEntityMessage(player.id(), "getLoadouts")
@@ -235,6 +242,7 @@ function updatePreview()
     widget.setVisible("lblHealth", false)
     widget.setVisible("lblEnergy", false)
     widget.setVisible("lblDrain", false)
+    widget.setVisible("lblMass", false)
     widget.setVisible("lblHealthBonus", false)
     widget.setVisible("lblSpeedPenalty", false)
     widget.setVisible("lblEnergyPenalty", false)

@@ -61,12 +61,12 @@ function init()
     return storage.chips3
   end)
 
-  message.setHandler("setMechStatsOpen", function(_, _, value)
-    storage.mechStatsOpen = value
+  message.setHandler("setMechDeployed", function(_,_, value)
+    storage.mechDeployed = value
   end)
 
-  message.setHandler("isMechStatsOpen", function()
-    return storage.mechStatsOpen
+  message.setHandler("isMechDeployed", function()
+    return storage.mechDeployed
   end)
 
   if not storage.currentLoadout then
