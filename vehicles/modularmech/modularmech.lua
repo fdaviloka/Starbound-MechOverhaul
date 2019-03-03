@@ -174,6 +174,40 @@ function init()
   --self.energyDrain = self.energyDrain*0.6
   --adding mass energy drain penalty
   self.energyDrain = self.energyDrain + (self.parts.body.energyPenalty or 0)
+
+  local chips = self.chips or {}
+  for _, chip in pairs(chips) do
+    if chip.name == "mechchiprefueler" then
+      local mult = 0.75
+      self.energyDrain = self.energyDrain * mult
+
+      local leftPower = self.leftArm:getArmPower()
+      if leftPower then
+        leftPower = leftPower * mult
+        self.leftArm:setArmPower(leftPower)
+      end
+
+      local rightPower = self.rightArm:getArmPower()
+      if rightPower then
+        rightPower = rightPower * mult
+        self.rightArm:setArmPower(rightPower)
+      end
+    end
+
+    if chip.name == "mechchippower" then
+      local leftPower = self.leftArm:getArmPower()
+      if leftPower then
+        leftPower = leftPower * 2
+        self.leftArm:setArmPower(leftPower)
+      end
+
+      local rightPower = self.rightArm:getArmPower()
+      if rightPower then
+        rightPower = rightPower * 2
+        self.rightArm:setArmPower(rightPower)
+      end
+    end
+  end
   --end
 
   -- check for environmental hazards / protection
@@ -270,20 +304,7 @@ end
 function update(dt)
   --chips setup
   for _,chip in pairs(self.chips) do
-    if chip.name == "mechchippower" and not self.powerBuffApplied then
-      local leftPower = self.leftArm:getArmPower()
-      if leftPower then
-        leftPower = leftPower * 2
-        self.leftArm:setArmPower(leftPower)
-      end
 
-      local rightPower = self.rightArm:getArmPower()
-      if rightPower then
-        rightPower = rightPower * 2
-        self.rightArm:setArmPower(rightPower)
-      end
-      self.powerBuffApplied = true
-    end
   end
 
   -- despawn if owner has left the world

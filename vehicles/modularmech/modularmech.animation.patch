@@ -76,7 +76,7 @@
 	    "pointLight" : false,
 			"transformationGroups" : ["body"],
 	    "position" : [0, 0],
-	    "color" : [236, 204, 128]
+	    "color" : [153, 194, 255]
 		}
 	}
 ]
