@@ -1,5 +1,6 @@
 require "/scripts/vec2.lua"
 require "/scripts/util.lua"
+require "/vehicles/modularmech/mechpartmanager.lua"
 
 function init()
 
@@ -33,12 +34,19 @@ function init()
   self.ownerUuid = config.getParameter("ownerUuid")
   self.ownerEntityId = config.getParameter("ownerEntityId")
 
-  while not self.mechParams do
-    self.mechParamsMessage = world.sendEntityMessage(self.ownerEntityId, "getMechParams")
-    if self.mechParamsMessage:finished() and self.mechParamsMessage:succeeded() then
-      self.mechParams = self.mechParamsMessage:result()
-    end
+  --setting current chips
+  local currentLoadoutMessage = world.sendEntityMessage(self.ownerEntityId, "getCurrentLoadout")
+  self.currentLoadout = currentLoadoutMessage:result() or 1
+
+  local chipsMessage = world.sendEntityMessage(self.ownerEntityId, "getChips" .. self.currentLoadout)
+  self.chips = chipsMessage:result()
+  if not self.chips then
+    self.chips = {}
   end
+
+  self.chip1 = self.chips.chip1 and self.chips.chip1.name or nil
+  self.chip2 = self.chips.chip2 and self.chips.chip2.name or nil
+  self.chip3 = self.chips.chip3 and self.chips.chip3.name or nil
 
   -- initialize configuration parameters
 
@@ -119,6 +127,11 @@ function init()
 
   self.parts = config.getParameter("parts")
 
+  local params = {}
+  params.parts = self.parts
+  params = MechPartManager.calculateTotalMass(params, self.chips)
+  self.parts = params.parts
+
   -- setup body
 
   self.protection = self.parts.body.protection
@@ -151,15 +164,50 @@ function init()
 
   -- setup energy pool --modded
   --set up health pool
-  self.healthMax = self.parts.body.energyMax + self.parts.body.healthBonus
-  sb.logInfo(self.healthMax)
+  self.healthMax = self.parts.body.healthMax + self.parts.body.healthBonus
   storage.health = storage.health or (config.getParameter("startHealthRatio", 1.0) * self.healthMax)
 
   self.energyMax = self.parts.body.energyMax
   storage.energy = 0
 
   self.energyDrain = self.parts.body.energyDrain + (self.parts.leftArm.energyDrain or 0) + (self.parts.rightArm.energyDrain or 0)
-  self.energyDrain = self.energyDrain*0.6
+  --self.energyDrain = self.energyDrain*0.6
+  --adding mass energy drain penalty
+  self.energyDrain = self.energyDrain + (self.parts.body.energyPenalty or 0)
+
+  local chips = self.chips or {}
+  for _, chip in pairs(chips) do
+    if chip.name == "mechchiprefueler" then
+      local mult = 0.75
+      self.energyDrain = self.energyDrain * mult
+
+      local leftPower = self.leftArm:getArmPower()
+      if leftPower then
+        leftPower = leftPower * mult
+        self.leftArm:setArmPower(leftPower)
+      end
+
+      local rightPower = self.rightArm:getArmPower()
+      if rightPower then
+        rightPower = rightPower * mult
+        self.rightArm:setArmPower(rightPower)
+      end
+    end
+
+    if chip.name == "mechchippower" then
+      local leftPower = self.leftArm:getArmPower()
+      if leftPower then
+        leftPower = leftPower * 2
+        self.leftArm:setArmPower(leftPower)
+      end
+
+      local rightPower = self.rightArm:getArmPower()
+      if rightPower then
+        rightPower = rightPower * 2
+        self.rightArm:setArmPower(rightPower)
+      end
+    end
+  end
   --end
 
   -- check for environmental hazards / protection
@@ -227,6 +275,11 @@ function init()
   self.doubleJumpCount = 0
   self.doubleJumpDelay = 0
 
+  --dash values
+  self.maxDashDist = 20
+  self.doubleDirCount = 0
+  self.doubleDirDelay = 0
+
   self.crouch = 0.0 -- 0.0 ~ 1.0
   self.crouchTarget = 0.0
   self.crouchCheckMax = 7.0
@@ -249,6 +302,11 @@ function init()
 end
 
 function update(dt)
+  --chips setup
+  for _,chip in pairs(self.chips) do
+
+  end
+
   -- despawn if owner has left the world
   if not self.ownerEntityId or world.entityType(self.ownerEntityId) ~= "player" then
     despawn()
@@ -398,13 +456,13 @@ function update(dt)
 
       if newControls.Special1 and not self.lastControls.Special1 and storage.energy > 0 then
         animator.playSound("horn")
-      end
 
-      if newControls.Special2 then
-        mcontroller.setYVelocity(50)
-      end
-      if newControls.Special3 then
-        mcontroller.setYVelocity(-50)
+        for _,chip in pairs(self.chips) do
+          if chip.name == "mechchiplight" then
+            self.mechLightActive = not self.mechLightActive
+            animator.setLightActive("mechChipLight", self.mechLightActive)
+          end
+        end
       end
 
       if self.flightMode then
@@ -414,7 +472,7 @@ function update(dt)
 		      self.manualFlightMode = false
 		    end
 
-		    if self.manualFlightMode and mcontroller.yVelocity() < 0 and mcontroller.isColliding() then
+		    if self.manualFlightMode and mcontroller.yVelocity() > 0 and mcontroller.isColliding() then
           self.manualFlightMode = false
           setFlightMode(false)
         end
@@ -422,7 +480,7 @@ function update(dt)
 		    if not hasTouched(newControls) and not hasTouched(oldControls) and self.manualFlightMode then
 		      local vel = mcontroller.velocity()
             if vel[1] ~= 0 or vel[2] ~= 0 then
-              mcontroller.approachVelocity({0, 0}, self.flightControlForce*2)
+              mcontroller.approachVelocity({0, 0}, self.flightControlForce*1.5)
               boost(vec2.mul(vel, -1))
             end
 	    	end
@@ -585,6 +643,29 @@ function update(dt)
   end
   --end
 
+  --dash code--to be implemented
+  if newControls.left and not oldControls.left then
+    self.doubleDirCount = self.doubleDirCount - 1
+    self.doubleDirDelay = self.doubleTabCheckDelayTime
+  end
+
+  if newControls.right and not oldControls.right then
+    self.doubleDirCount = self.doubleDirCount + 1
+    self.doubleDirDelay = self.doubleTabCheckDelayTime
+  end
+
+  if self.doubleDirCount >= 2 or self.doubleDirCount <= -2 then
+
+  else
+
+  end
+
+  self.doubleDirDelay = self.doubleDirDelay - dt
+  if self.doubleDirDelay < 0 then
+    self.doubleDirCount = 0
+  end
+  --end
+
   --crouch code is here
   if storage.energy > 0 then
     self.crouch = self.crouch + (self.crouchTarget - self.crouch) * 0.1
@@ -625,16 +706,7 @@ function update(dt)
 -- lpk - regen while idle, no drain while coasting
   if self.driverId then
 	--energy drain
-    local energyDrain = self.energyDrain
-
-	  --set energy drain x2 on manual flight mode
-	  if self.flightMode and world.gravity(mcontroller.position()) == 0 then
-	    energyDrain = self.energyDrain
-	  elseif self.flightMode and world.gravity(mcontroller.position()) ~= 0 then
-	    energyDrain = self.energyDrain*2
-  	elseif not self.flightMode and world.gravity(mcontroller.position()) ~= 0 then
-	    energyDrain = self.energyDrain
-  	end
+   local energyDrain = self.energyDrain
 
 	--set energy drain to 0 if null movement
     if not hasTouched(newControls) and not hasTouched(oldControls) and not self.manualFlightMode then --(not hasFired) then
@@ -683,6 +755,17 @@ function update(dt)
       animator.playSound("energyout")
       self.energyOutPlayed = true
     end
+    animator.setLightActive("mechChipLight", false)
+
+    for _, arm in pairs({"left", "right"}) do
+      local fireControl = (arm == "left") and "PrimaryFire" or "AltFire"
+
+      animator.resetTransformationGroup(arm .. "Arm")
+      animator.resetTransformationGroup(arm .. "ArmFlipper")
+
+      self[arm .. "Arm"]:updateBase(dt, self.driverId, false, false, self.aimPosition, self.facingDirection, self.crouch * self.bodyCrouchMax)
+      self[arm .. "Arm"]:update(dt)
+    end
 	  return
   else
     self.energyOutPlayed = false
@@ -692,6 +775,10 @@ function update(dt)
       animator.setAnimationState("power", "activate")
       animator.playSound("energyback")
       self.energyBackPlayed = true
+    end
+
+    if self.mechLightActive then
+      animator.setLightActive("mechChipLight", true)
     end
   end
 
@@ -1107,4 +1194,40 @@ function hasTouched(controls)
     if control then return true end
   end
   return false
+end
+
+--target position for dash
+function findTargetPosition(dir, maxDist)
+  local dist = 1
+  local targetPosition
+  local collisionPoly = mcontroller.collisionPoly()
+  local testPos = mcontroller.position()
+  while dist <= maxDist do
+    testPos[1] = testPos[1] + dir
+    if not world.polyCollision(collisionPoly, testPos, {"Null", "Block", "Dynamic", "Slippery"}) then
+      local oneDown = {testPos[1], testPos[2] - 1}
+      if not world.polyCollision(collisionPoly, oneDown, {"Null", "Block", "Dynamic", "Platform"}) and not self.flightMode then
+        testPos = oneDown
+      end
+    else
+      local oneUp = {testPos[1], testPos[2] + 1}
+      if not world.polyCollision(collisionPoly, oneUp, {"Null", "Block", "Dynamic", "Slippery"}) then
+        testPos = oneUp
+      else
+        break
+      end
+    end
+    targetPosition = testPos
+    dist = dist + 1
+  end
+
+  if targetPosition then
+    local towardGround = {testPos[1], testPos[2] - 0.8}
+    local groundPosition = world.resolvePolyCollision(collisionPoly, towardGround, 0.8, {"Null", "Block", "Dynamic", "Platform"})
+    if groundPosition and not (groundPosition[1] == towardGround[1] and groundPosition[2] == towardGround[2]) then
+      targetPosition = groundPosition
+    end
+  end
+
+  return targetPosition
 end

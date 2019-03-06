@@ -3,9 +3,19 @@
     "op": "add",
     "path": "/normal/-",
     "value": {
-      "label": "Mech fuel tank",
+      "label": "Mech Fuel Tank",
       "pane": "/interface/mechfuel/mechfuel.config",
       "icon": "/interface/mechfuel/icon.png"
+    }
+  },
+
+  {
+    "op": "add",
+    "path": "/normal/-",
+    "value": {
+      "label": "Mech Loadouts",
+      "pane": "/interface/mechstats/mechstats.config",
+      "icon": "/interface/mechstats/icon.png"
     }
   }
 ]

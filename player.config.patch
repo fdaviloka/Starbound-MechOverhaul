@@ -1,5 +1,9 @@
 [
   {"op" : "add", "path" : "/defaultBlueprints/tier1/-", "value" : "fuelcatalyst"},
   {"op" : "add", "path" : "/defaultBlueprints/tier1/-", "value" : "catalystfuelrefinery"},
-  {"op" : "add", "path" : "/defaultBlueprints/tier1/-", "value" : "mechfuelrefinery"}
+  {"op" : "add", "path" : "/defaultBlueprints/tier1/-", "value" : "mechfuelrefinery"},
+
+  {"op" : "add", "path" : "/defaultBlueprints/tier1/-", "value" : "mechchipexpansion1"},
+  {"op" : "add", "path" : "/defaultBlueprints/tier1/-", "value" : "mechchipexpansion2"},
+  {"op" : "add", "path" : "/defaultBlueprints/tier1/-", "value" : "mechchipexpansion3"}
 ]

@@ -35,8 +35,8 @@ function init()
   end)
 
 
-  message.setHandler("setMechItemSet", function(_, _, newItemSet)
-      setMechItemSet(newItemSet)
+  message.setHandler("setMechItemSet", function(_, _, newItemSet, chips)
+      setMechItemSet(newItemSet, chips)
     end)
 
   message.setHandler("getMechColorIndexes", function()
@@ -77,6 +77,14 @@ function init()
 
   if not player.hasQuest("fuelDataQuest") then
     player.startQuest( { questId = "fuelDataQuest" , templateId = "fuelDataQuest", parameters = {}} )
+  end
+
+  if not player.hasQuest("mechchipslots") then
+    player.startQuest( { questId = "mechchipslots" , templateId = "mechchipslots", parameters = {}} )
+  end
+
+  if not player.hasQuest("mechloadoutsdata") then
+    player.startQuest( { questId = "mechloadoutsdata" , templateId = "mechloadoutsdata", parameters = {}} )
   end
 
   self.unlocked = status.statusProperty("mechUnlocked", false)
@@ -148,10 +156,23 @@ function init()
   --player.interact("ScriptPane", "/interface/mechfuel/mechfuel.config", storage.vehicleId)
 end
 
-function setMechItemSet(newItemSet)
+function setMechItemSet(newItemSet, chips)
   self.itemSet = self.partManager:validateItemSet(newItemSet)
   status.setStatusProperty("mechItemSet", self.itemSet)
+
+  local currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
+  local loadoutNum = currentLoadoutMessage:result() or 1
+
+  local chipsMessage = world.sendEntityMessage(player.id(), "getChips" .. loadoutNum)
+  self.chips = chipsMessage:result()
+
   buildMechParameters()
+
+  if loadoutNum then
+    world.sendEntityMessage(player.id(), "setLoadout" .. loadoutNum, newItemSet, chips)
+  else
+    world.sendEntityMessage(player.id(), "setLoadout1", newItemSet, chips)
+  end
 end
 
 function setMechColorIndexes(primaryIndex, secondaryIndex)
@@ -185,7 +206,7 @@ function update(dt)
 
           --setting fuel for temp mech items
 		      local energyMax = self.mechParameters.parts.body.energyMax
-          world.sendEntityMessage(self.playerId, "setFuelType", "Mech fuel")
+          world.sendEntityMessage(self.playerId, "setFuelType", "Mech Fuel")
 		      world.sendEntityMessage(self.playerId, "setQuestFuelCount", energyMax)
           --end
 
@@ -206,6 +227,10 @@ function update(dt)
         end
       end
     end
+  end
+
+  if not storage.vehicleId then
+    world.sendEntityMessage(player.id(), "setMechDeployed", false)
   end
 
   if storage.vehicleId and world.entityType(storage.vehicleId) ~= "vehicle" then
@@ -306,6 +331,9 @@ function deploy(itemSet, primaryColorIndex, secondaryColorIndex)
   player.stopLounging()
 
   buildMechParameters(itemSet, primaryColorIndex, secondaryColorIndex)
+
+  if not self.mechParameters then return end
+
   self.mechParameters.ownerEntityId = self.playerId
   self.mechParameters.startEnergyRatio = storage.inMechWithEnergyRatio
   storage.inMechWithEnergyRatio = nil
@@ -315,6 +343,7 @@ function deploy(itemSet, primaryColorIndex, secondaryColorIndex)
   storage.inMechWithHealthRatio = nil
   --end
   storage.vehicleId = world.spawnVehicle("modularmech", spawnPosition(), self.mechParameters)
+  world.sendEntityMessage(player.id(), "setMechDeployed", true)
 
   player.lounge(storage.vehicleId)
 end
@@ -326,6 +355,9 @@ function buildMechParameters(itemSet, primaryColorIndex, secondaryColorIndex)
   if self.partManager:itemSetComplete(itemSet) then
     self.mechParameters = self.partManager:buildVehicleParameters(itemSet, primaryColorIndex, secondaryColorIndex)
     self.mechParameters.ownerUuid = player.uniqueId()
+    if self.chips then
+      self.mechParameters = MechPartManager.calculateTotalMass(self.mechParameters, self.chips)
+    end
   else
     self.mechParameters = nil
   end
@@ -377,13 +409,13 @@ function drawEnergyBar()
   if fuelType == "Oil" then
     imageFrame = "/scripts/deployment/energybarframeoil.png"
     imageBar =  "/scripts/deployment/energybaroil.png"
-  elseif fuelType == "Mech fuel" then
+  elseif fuelType == "Mech Fuel" then
     imageFrame = "/scripts/deployment/energybarframemechfuel.png"
     imageBar =  "/scripts/deployment/energybarmechfuel.png"
   elseif fuelType == "Erchius" then
     imageFrame = "/scripts/deployment/energybarframe.png"
     imageBar =  "/scripts/deployment/energybar.png"
-  elseif fuelType == "Unrefined" then
+  elseif fuelType == "Unrefined Fuel" then
     imageFrame = "/scripts/deployment/energybarframeunrefinedfuel.png"
     imageBar =  "/scripts/deployment/energybarunrefinedfuel.png"
   else

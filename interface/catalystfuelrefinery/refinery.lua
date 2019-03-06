@@ -1,4 +1,8 @@
 function init()
+  if not player.hasQuest("fuelrefineriesslots") then
+    player.startQuest( { questId = "fuelrefineriesslots" , templateId = "fuelrefineriesslots", parameters = {}} )
+  end
+  
   self.playerId = player.id()
 
   self.itemsLeft = 0
@@ -63,7 +67,7 @@ function insertFuel()
 end
 
 function insertCatalyst()
-if self.disabled then return end
+  if self.disabled then return end
 
   swapItem("itemSlot_catalystInput", false, "fuelcatalyst", "setCatalystInputItem2")
 end
@@ -81,12 +85,13 @@ function refine()
   local fuelInput = widget.itemSlotItem("itemSlot_input")
   local catalystInput = widget.itemSlotItem("itemSlot_catalystInput")
 
-  if not fuelInput or not catalystInput then return end
+  if not fuelInput or fuelInput.count < 10 or not catalystInput or catalystInput.count < 1 then return end
 
-  if catalystInput.count >= fuelInput.count / 10 then
-    self.itemsLeft = fuelInput.count
-  elseif catalystInput.count < fuelInput.count / 10 and catalystInput.count > 0 then
-    self.itemsLeft = fuelInput.count - catalystInput.count
+  local fuelInputCount = math.floor(fuelInput.count / 10)
+  if catalystInput.count >= fuelInputCount then
+    self.itemsLeft = fuelInputCount
+  else
+    self.itemsLeft = catalystInput.count
   end
 end
 
@@ -105,7 +110,7 @@ function swapItem(widgetName, output, inputItem, message)
         swapItem.count = itemCount
       end
     end
-    
+
     player.setSwapSlotItem(currentItem)
     widget.setItemSlotItem(widgetName, swapItem)
   elseif not swapItem and not output then
@@ -139,27 +144,29 @@ function craftItem()
     return
   end
 
-  if fuelItem.count >= 10 and catalystItem.count > 1 then
+  if fuelItem.count > 10 then
     fuelItem.count = fuelItem.count - 10
-    catalystItem.count = catalystItem.count - 1
-  elseif fuelItem.count == 10 and catalystItem then
-     fuelItem = nil
-     catalystItem.count = catalystItem.count - 1
-     self.itemsLeft = 0
-  elseif catalystItem.count == 1 and fuelItem and fuelItem.count >= 10 then
-    fuelItem.count = fuelItem.count - 10
-    catalystItem = nil
+  elseif fuelItem.count == 10 then
+    fuelItem = nil
+  else
     self.itemsLeft = 0
-  elseif not fuelItem or fuelItem.count < 10 or not catalystItem or catalystItem.count < 1 then
+    return
+  end
+
+  if catalystItem.count > 1 then
+    catalystItem.count = catalystItem.count - 1
+  elseif catalystItem.count == 1 then
+    catalystItem = nil
+  else
     self.itemsLeft = 0
     return
   end
 
   if not outputItem then
     outputItem = {name = "liquidmechfuel", count = 10}
-  elseif outputItem and outputItem.count < 1000 then
+  elseif outputItem.count <= 990 then
     outputItem.count = outputItem.count + 10
-  elseif outputItem and outputItem.count == 1000 then
+  else
     self.itemsLeft = 0
     return
   end

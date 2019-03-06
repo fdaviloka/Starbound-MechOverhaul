@@ -1,0 +1,10 @@
+[
+  {
+    "op" : "add",
+    "path" : "/recipes/-",
+    "value" :
+    [
+      "mechchiphealth", "mechchipdefense", "mechchipfuel", "mechchippower"
+    ]
+  }
+]
