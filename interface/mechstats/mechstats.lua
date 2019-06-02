@@ -99,6 +99,15 @@ function update(dt)
       self.chips = self.loadouts["chips" .. loadoutNum]
 
       widget.setSelectedOption("radioLoadouts", self.loadouts.currentLoadout)
+
+      if self.loadouts.first == 1 then
+        firstItemSetMessage = world.sendEntityMessage(player.id(), "getMechItemSet");
+
+        self.loadouts.loadout1 = firstItemSetMessage:result();
+
+        world.sendEntityMessage(player.id(), "setFirst", 2);
+      end
+
       if loadoutNum == 1 then
         world.sendEntityMessage(player.id(), "setMechItemSet", self.loadouts.loadout1, self.chips)
         self.itemSet = self.loadouts.loadout1

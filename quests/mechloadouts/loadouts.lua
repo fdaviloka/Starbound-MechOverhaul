@@ -26,6 +26,7 @@ function init()
     loadouts.chips2 = storage.chips2
     loadouts.chips3 = storage.chips3
     loadouts.currentLoadout = storage.currentLoadout
+    loadouts.first = storage.first
     return loadouts
   end)
 
@@ -69,8 +70,16 @@ function init()
     return storage.mechDeployed
   end)
 
+  message.setHandler("setFirst", function(_, _, value)
+    storage.first = value
+  end)
+
   if not storage.currentLoadout then
     storage.currentLoadout = 1
+  end
+
+  if not storage.first then
+    storage.first = 1
   end
 end
 
