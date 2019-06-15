@@ -757,6 +757,8 @@ function update(dt)
     end
     animator.setLightActive("mechChipLight", false)
 
+    local chains = {}
+
     for _, arm in pairs({"left", "right"}) do
       local fireControl = (arm == "left") and "PrimaryFire" or "AltFire"
 
@@ -765,7 +767,13 @@ function update(dt)
 
       self[arm .. "Arm"]:updateBase(dt, self.driverId, false, false, self.aimPosition, self.facingDirection, self.crouch * self.bodyCrouchMax)
       self[arm .. "Arm"]:update(dt)
+
+      if self[arm.."Arm"].renderChain then
+        table.insert(chains, self[arm.."Arm"].chain)
+      end
     end
+
+    vehicle.setAnimationParameter("chains", chains)
 	  return
   else
     self.energyOutPlayed = false
@@ -871,6 +879,8 @@ function update(dt)
 
   -- update and animate arms
 
+  local chains = {}
+
   for _, arm in pairs({"left", "right"}) do
     local fireControl = (arm == "left") and "PrimaryFire" or "AltFire"
 
@@ -880,10 +890,16 @@ function update(dt)
     self[arm .. "Arm"]:updateBase(dt, self.driverId, newControls[fireControl], oldControls[fireControl], self.aimPosition, self.facingDirection, self.crouch * self.bodyCrouchMax)
     self[arm .. "Arm"]:update(dt)
 
+    if self[arm.."Arm"].renderChain then
+      table.insert(chains, self[arm.."Arm"].chain)
+   end
+
     if self.facingDirection < 0 then
       animator.translateTransformationGroup(arm .. "ArmFlipper", {(arm == "right") and self.armFlipOffset or -self.armFlipOffset, 0})
     end
   end
+
+  vehicle.setAnimationParameter("chains", chains)
 
   -- animate boosters and boost flames
 

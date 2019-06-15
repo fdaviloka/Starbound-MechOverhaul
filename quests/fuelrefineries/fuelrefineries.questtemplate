@@ -1,7 +1,7 @@
 {
     "id" : "fuelrefineriesslots",
-    "title" : "quest for saving refineries item slots.",
-    "text" : "Go with the player.",
+    "title" : "Mech Fuel Refineries data",
+    "text" : "Quest for saving refineries data, do not cancel!",
     "completionText" : "Should never be completed, nor fail!",
 	"conditions" : [],
 	"rewards" : [],
