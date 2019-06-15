@@ -31,7 +31,7 @@
     "path" : "/paneLayout/categories/buttons/-",
     "value" :
     {
-        "position" : [125, 295],
+        "position" : [125, 300],
         "baseImage" : "/interface/crafting/fullUnselectedTab.png",
         "baseImageChecked" : "/interface/crafting/selectedTab.png",
         "data" :
@@ -48,7 +48,7 @@
     {
        "type" : "image",
        "file" : "/interface/crafting/tabicon_mechanics.png",
-       "position" : [133, 297],
+       "position" : [133, 302],
        "zlevel" : 3
     }
   }

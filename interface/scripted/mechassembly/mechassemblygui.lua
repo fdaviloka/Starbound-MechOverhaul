@@ -320,7 +320,9 @@ function remoteItemSetChanged()
   if getItemSetMessage:finished() and getItemSetMessage:succeeded() then
     self.itemSet = getItemSetMessage:result()
 
-    for partType,_ in pairs({rightArm = "", leftArm = "", body = "", booster = "", legs = ""}) do
+    --cosmetic slots compat
+    for partType,_ in pairs({rightArm = "", leftArm = "", body = "", booster = "",
+    legs = "", booster_social = "", body_social = "", legs_social = ""}) do
       widget.setItemSlotItem("itemSlot_" .. partType, nil)
     end
 
