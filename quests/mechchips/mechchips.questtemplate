@@ -1,7 +1,7 @@
 {
     "id" : "mechchipslots",
-    "title" : "quest for saving mech fuel data.",
-    "text" : "Go with the player.",
+    "title" : "Mech Chip data.",
+    "text" : "Quest for saving mech chip data, do not cancel.",
     "completionText" : "Should never be completed, nor fail!",
 	"conditions" : [],
 	"rewards" : [],

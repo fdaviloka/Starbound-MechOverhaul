@@ -12,7 +12,14 @@ function MechPartManager:new()
     "booster",
     "body",
     "legs",
-    "horn"
+    "horn",
+
+    -------------------------
+    -- Cosmetic_slots_for_Mechs
+    "booster_social",
+    "body_social",
+    "legs_social"
+    -------------------------
   }
 
   -- parts required for a mech to launch
@@ -93,7 +100,12 @@ function MechPartManager:new()
 end
 
 function MechPartManager:partConfig(partType, itemDescriptor)
-  local typeKey = (partType == "leftArm" or partType == "rightArm") and "arm" or partType
+
+  -------------------------
+  -- Cosmetic_slots_for_Mechs
+  local typeKey = (partType == "leftArm" or partType == "rightArm") and "arm" or (partType == "body_social") and "body" or (partType == "legs_social") and "legs" or (partType == "booster_social") and "booster" or partType
+  -------------------------
+
   local itemConfig = root.itemConfig(itemDescriptor)
   if itemConfig then
     local mechPartConfig = itemConfig.parameters.mechPart or itemConfig.config.mechPart
@@ -148,13 +160,19 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
     physicsCollisions = {}
   }
 
+  -------------------------
+  -- Cosmetic_slots_for_Mechs
   for partType, itemDescriptor in pairs(itemSet) do
     local thisPartConfig = self:partConfig(partType, itemDescriptor)
     if partType == "leftArm" or partType == "rightArm" then
       thisPartConfig = util.replaceTag(thisPartConfig, "armName", partType)
+      primaryColorIndex = self:validateColorIndex(primaryColorIndex)
+      secondaryColorIndex = self:validateColorIndex(secondaryColorIndex)
+      params.partDirectives[partType] = self:buildSwapDirectives(thisPartConfig, primaryColorIndex, secondaryColorIndex)
+      params.partImages = util.mergeTable(params.partImages, thisPartConfig.partImages or {})
+      params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
     end
-
-    if partType ~= "horn" then
+    if partType == "leftArm" or partType == "rightArm" or partType == "body" or partType == "legs" or partType == "booster" then
       if self.partStatMap[partType] and thisPartConfig.stats then
         for stat, fMap in pairs(self.partStatMap[partType]) do
           for param, fName in pairs(fMap) do
@@ -162,22 +180,66 @@ function MechPartManager:buildVehicleParameters(itemSet, primaryColorIndex, seco
           end
         end
       end
-
       params.parts[partType] = thisPartConfig.partParameters
-
-      primaryColorIndex = self:validateColorIndex(primaryColorIndex)
-      secondaryColorIndex = self:validateColorIndex(secondaryColorIndex)
-      params.partDirectives[partType] = self:buildSwapDirectives(thisPartConfig, primaryColorIndex, secondaryColorIndex)
-
-      params.partImages = util.mergeTable(params.partImages, thisPartConfig.partImages or {})
       params.damageSources = util.mergeTable(params.damageSources, thisPartConfig.damageSources or {})
       params.loungePositions = util.mergeTable(params.loungePositions, thisPartConfig.loungePositions or {})
       params.physicsForces = util.mergeTable(params.physicsForces, thisPartConfig.physicsForces or {})
       params.physicsCollisions = util.mergeTable(params.physicsCollisions, thisPartConfig.physicsCollisions or {})
     end
-
-    params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
+    if partType == "body" then
+      if itemSet.body_social == nil then
+        primaryColorIndex = self:validateColorIndex(primaryColorIndex)
+        secondaryColorIndex = self:validateColorIndex(secondaryColorIndex)
+        params.partDirectives[partType] = self:buildSwapDirectives(thisPartConfig, primaryColorIndex, secondaryColorIndex)
+        params.partImages = util.mergeTable(params.partImages, thisPartConfig.partImages or {})
+        params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
+      end
+    end
+    if partType == "legs" then
+      if itemSet.legs_social == nil then
+        primaryColorIndex = self:validateColorIndex(primaryColorIndex)
+        secondaryColorIndex = self:validateColorIndex(secondaryColorIndex)
+        params.partDirectives[partType] = self:buildSwapDirectives(thisPartConfig, primaryColorIndex, secondaryColorIndex)
+        params.partImages = util.mergeTable(params.partImages, thisPartConfig.partImages or {})
+        params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
+      end
+    end
+    if partType == "booster" then
+      if itemSet.booster_social == nil then
+        primaryColorIndex = self:validateColorIndex(primaryColorIndex)
+        secondaryColorIndex = self:validateColorIndex(secondaryColorIndex)
+        params.partDirectives[partType] = self:buildSwapDirectives(thisPartConfig, primaryColorIndex, secondaryColorIndex)
+        params.partImages = util.mergeTable(params.partImages, thisPartConfig.partImages or {})
+        params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
+      end
+    end
+    if partType == "horn" then
+      params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
+      params.parts.hornName = (itemSet.horn and itemSet.horn.name)
+    end
+    if partType == "body_social" then
+      if itemSet.body ~= nil then
+        params.partDirectives.body = self:buildSwapDirectives(thisPartConfig, primaryColorIndex, secondaryColorIndex)
+        params.partImages = util.mergeTable(params.partImages, thisPartConfig.partImages or {})
+        params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
+      end
+    end
+    if partType == "legs_social" then
+      if itemSet.legs ~= nil then
+        params.partDirectives.legs = self:buildSwapDirectives(thisPartConfig, primaryColorIndex, secondaryColorIndex)
+        params.partImages = util.mergeTable(params.partImages, thisPartConfig.partImages or {})
+        params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
+      end
+    end
+    if partType == "booster_social" then
+      if itemSet.booster ~= nil then
+        params.partDirectives.booster = self:buildSwapDirectives(thisPartConfig, primaryColorIndex, secondaryColorIndex)
+        params.partImages = util.mergeTable(params.partImages, thisPartConfig.partImages or {})
+        params.animationCustom = util.mergeTable(params.animationCustom, thisPartConfig.animationCustom or {})
+      end
+    end
   end
+  -------------------------
 
   if params.parts.body then
     params.parts.body.healthMax = params.parts.body.energyMax

@@ -87,10 +87,10 @@ function init()
     player.startQuest( { questId = "mechloadoutsdata" , templateId = "mechloadoutsdata", parameters = {}} )
   end
 
-  self.unlocked = status.statusProperty("mechUnlocked", false)
-  self.itemSet = status.statusProperty("mechItemSet", {})
-  self.primaryColorIndex = status.statusProperty("mechPrimaryColorIndex", 0)
-  self.secondaryColorIndex = status.statusProperty("mechSecondaryColorIndex", 0)
+  self.unlocked = player.getProperty("mechUnlocked", false)
+  self.itemSet = player.getProperty("mechItemSet", {})
+  self.primaryColorIndex = player.getProperty("mechPrimaryColorIndex", 0)
+  self.secondaryColorIndex = player.getProperty("mechSecondaryColorIndex", 0)
 
   self.partManager = MechPartManager:new()
 
@@ -158,7 +158,7 @@ end
 
 function setMechItemSet(newItemSet, chips)
   self.itemSet = self.partManager:validateItemSet(newItemSet)
-  status.setStatusProperty("mechItemSet", self.itemSet)
+  player.setProperty("mechItemSet", self.itemSet)
 
   local currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
   local loadoutNum = currentLoadoutMessage:result() or 1
@@ -178,8 +178,8 @@ end
 function setMechColorIndexes(primaryIndex, secondaryIndex)
   self.primaryColorIndex = self.partManager:validateColorIndex(primaryIndex)
   self.secondaryColorIndex = self.partManager:validateColorIndex(secondaryIndex)
-  status.setStatusProperty("mechPrimaryColorIndex", self.primaryColorIndex)
-  status.setStatusProperty("mechSecondaryColorIndex", self.secondaryColorIndex)
+  player.setProperty("mechPrimaryColorIndex", self.primaryColorIndex)
+  player.setProperty("mechSecondaryColorIndex", self.secondaryColorIndex)
   buildMechParameters()
 end
 

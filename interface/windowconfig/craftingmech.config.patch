@@ -4,8 +4,8 @@
     "path" : "/paneLayout/categories/buttons/-",
     "value" :
     {
-        "position" : [126, 221],
-        "baseImage" : "/interface/crafting/unselectedTab.png",
+        "position" : [125, 221],
+        "baseImage" : "/interface/crafting/fullUnselectedTab.png",
         "baseImageChecked" : "/interface/crafting/selectedTab.png",
         "data" :
         {
@@ -22,6 +22,33 @@
        "type" : "image",
        "file" : "/interface/crafting/tabicon_mechanics.png",
        "position" : [133, 223],
+       "zlevel" : 3
+    }
+  },
+
+  {
+    "op" : "add",
+    "path" : "/paneLayout/categories/buttons/-",
+    "value" :
+    {
+        "position" : [125, 300],
+        "baseImage" : "/interface/crafting/fullUnselectedTab.png",
+        "baseImageChecked" : "/interface/crafting/selectedTab.png",
+        "data" :
+        {
+          "filter" : [ "mechchip" ]
+        }
+    }
+  },
+
+  {
+    "op" : "add",
+    "path" : "/paneLayout/lblChipTab2",
+    "value" :
+    {
+       "type" : "image",
+       "file" : "/interface/crafting/tabicon_mechanics.png",
+       "position" : [133, 302],
        "zlevel" : 3
     }
   }

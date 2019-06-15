@@ -75,6 +75,34 @@ function init()
     widget.setItemSlotItem("itemSlot_" .. partType, itemDescriptor)
   end
 
+  --cosmetic slots compatibility
+  for partType,itemDescriptor in pairs({rightArm = "", leftArm = "", body = "", booster = "", legs = "", horn = ""}) do
+    key = "itemSlot_" .. partType .. "_backing"
+
+    if partType == "legs" then
+      key = "legs_body_backing"
+    end
+
+    local temppos = widget.getPosition(key)
+
+    if temppos then
+      temppos[2] = temppos[2] + 4
+      widget.setPosition(key, temppos)
+    end
+  end
+
+  for partType,itemDescriptor in pairs({body = "", booster = "", legs = ""}) do
+    key = "itemSlot_" .. partType .. "_social"
+
+    local temppos = widget.getPosition(key)
+
+    if temppos then
+      temppos[2] = temppos[2] + 4
+      widget.setPosition(key, temppos)
+    end
+  end
+  ----------------------
+
   widget.setImage("imgPrimaryColorPreview", colorPreviewImage(self.primaryColorIndex))
   widget.setImage("imgSecondaryColorPreview", colorPreviewImage(self.secondaryColorIndex))
 
@@ -292,7 +320,9 @@ function remoteItemSetChanged()
   if getItemSetMessage:finished() and getItemSetMessage:succeeded() then
     self.itemSet = getItemSetMessage:result()
 
-    for partType,_ in pairs({rightArm = "", leftArm = "", body = "", booster = "", legs = ""}) do
+    --cosmetic slots compat
+    for partType,_ in pairs({rightArm = "", leftArm = "", body = "", booster = "",
+    legs = "", booster_social = "", body_social = "", legs_social = ""}) do
       widget.setItemSlotItem("itemSlot_" .. partType, nil)
     end
 
