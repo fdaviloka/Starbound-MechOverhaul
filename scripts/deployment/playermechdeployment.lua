@@ -3,24 +3,24 @@ require "/scripts/vec2.lua"
 
 function init()
   message.setHandler("unlockMech", function()
-      if not self.unlocked then
-        self.unlocked = true
-        status.setStatusProperty("mechUnlocked", true)
+    if not self.unlocked then
+      self.unlocked = true
+      player.setProperty("mechUnlocked", true)
 
-        local starterSet = config.getParameter("starterMechSet")
-        local speciesBodies = config.getParameter("speciesStarterMechBody")
-        local playerSpecies = player.species()
-        if speciesBodies[playerSpecies] then
-          starterSet.body = speciesBodies[playerSpecies]
-        end
-
-        for _,item in pairs(starterSet) do
-          player.giveBlueprint(item)
-        end
-
-        setMechItemSet(starterSet)
+      local starterSet = config.getParameter("starterMechSet")
+      local speciesBodies = config.getParameter("speciesStarterMechBody")
+      local playerSpecies = player.species()
+      if speciesBodies[playerSpecies] then
+        starterSet.body = speciesBodies[playerSpecies]
       end
-    end)
+
+      for _,item in pairs(starterSet) do
+        player.giveBlueprint(item)
+      end
+
+      setMechItemSet(starterSet)
+    end
+  end)
 
   message.setHandler("mechUnlocked", function()
       return self.unlocked
@@ -100,6 +100,10 @@ function init()
 
   buildMechParameters()
 
+  if self.itemSet.body and not self.unlocked then
+    unlockMech()
+  end
+
   self.beaconCheck = world.findUniqueEntity("mechbeacon")
 
   self.beaconFlashTimer = 0
@@ -172,6 +176,26 @@ function setMechItemSet(newItemSet, chips)
     world.sendEntityMessage(player.id(), "setLoadout" .. loadoutNum, newItemSet, chips)
   else
     world.sendEntityMessage(player.id(), "setLoadout1", newItemSet, chips)
+  end
+end
+
+function unlockMech()
+  if not self.unlocked then
+    self.unlocked = true
+    player.setProperty("mechUnlocked", true)
+
+    local starterSet = config.getParameter("starterMechSet")
+    local speciesBodies = config.getParameter("speciesStarterMechBody")
+    local playerSpecies = player.species()
+    if speciesBodies[playerSpecies] then
+      starterSet.body = speciesBodies[playerSpecies]
+    end
+
+    for _,item in pairs(starterSet) do
+      player.giveBlueprint(item)
+    end
+
+    setMechItemSet(starterSet)
   end
 end
 
