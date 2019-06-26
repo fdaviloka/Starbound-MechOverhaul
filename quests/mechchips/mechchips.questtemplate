@@ -11,5 +11,9 @@
     "invisible" : true,
     "logOnly" : true,
     "updateDelta" : 10,
+    "showInLog" : false,
+    "showAcceptDialog" : false,
+    "showCompleteDialog" : false,
+    "showFailDialog" : false,
     "script" : "/quests/mechchips/mechchips.lua"
 }

@@ -26,7 +26,12 @@ function init()
       if alive() then
         local restoreAmount = (base or 0) + self.healthMax * (percentage or 0)
         storage.health = math.min(storage.health + (restoreAmount*0.75), self.healthMax)
-		    world.sendEntityMessage(self.ownerEntityId, "setQuestFuelCount", math.min(storage.energy + (restoreAmount * 0.15), self.energyMax))
+
+        --XS Mechs -- NPC Mechs compatbility
+        if self.driverId and world.entityType(self.driverId) == "player" then
+          world.sendEntityMessage(self.ownerEntityId, "setQuestFuelCount", math.min(storage.energy + (restoreAmount * 0.15), self.energyMax))
+        end
+
         animator.playSound("restoreEnergy")
       end
     end)
@@ -271,7 +276,7 @@ function init()
 
   --New values here
   --manual flight mode
-  self.manualFlightMode = false;
+  self.manualFlightMode = false
   self.doubleJumpCount = 0
   self.doubleJumpDelay = 0
 
@@ -414,6 +419,11 @@ function update(dt)
   end
   self.driverId = driverId
 
+  --XS Mechs -- NPC Mechs compatbility
+  if self.driverId ~= self.ownerEntityId then
+    storage.energy = 100
+  end
+
   -- read controls or do deployment
 
   local newControls = {}
@@ -448,11 +458,13 @@ function update(dt)
 
     local walking = false
     if self.driverId then
-      for k, _ in pairs(self.lastControls) do
-        newControls[k] = vehicle.controlHeld("seat", k)
-      end
+      --for k, _ in pairs(self.lastControls) do
+        --newControls[k] = vehicle.controlHeld("seat", k)
+      --end
 
-      self.aimPosition = vehicle.aimPosition("seat")
+      --self.aimPosition = vehicle.aimPosition("seat")
+      self.aimPosition,newControls = readMechControls(newControls)
+      --- NPC Mechs - read controls from external function - allows override for faked input
 
       if newControls.Special1 and not self.lastControls.Special1 and storage.energy > 0 then
         animator.playSound("horn")
@@ -712,9 +724,16 @@ function update(dt)
     if not hasTouched(newControls) and not hasTouched(oldControls) and not self.manualFlightMode then --(not hasFired) then
       energyDrain = 0
     end
+    if self.driverId and not world.entityType(self.driverId) == "player" then
+      energyDrain = 0
+    end
+
     storage.energy = math.max(0, storage.energy - energyDrain * dt)
-	--set new fuel count on dummy quest
-  	world.sendEntityMessage(self.ownerEntityId, "setQuestFuelCount", storage.energy)
+  --XS Mechs -- NPC Mechs compatbility
+  	if self.driverId and world.entityType(self.driverId) == "player" then
+      --set new fuel count on dummy quest
+      world.sendEntityMessage(self.ownerEntityId, "setQuestFuelCount", storage.energy)
+    end
   end
 
   local inLiquid = world.liquidAt(mcontroller.position())
@@ -915,7 +934,7 @@ function update(dt)
 
   if storage.energy <= 0 then
 	  animator.setAnimationState("boost", "idle")
-      animator.setLightActive("boostLight", false)
+    animator.setLightActive("boostLight", false)
   end
 
   if self.boostDirection[1] == 0 and self.boostDirection[2] == 0 then
@@ -992,6 +1011,15 @@ function update(dt)
   self.lastPosition = newPosition
   self.lastVelocity = newVelocity
   self.lastOnGround = onGround
+end
+
+--XS Mechs -- NPC Mechs compatbility
+function readMechControls(newControls)
+  for k, _ in pairs(self.lastControls) do
+        newControls[k] = vehicle.controlHeld("seat", k)
+  end
+
+  return vehicle.aimPosition("seat"),newControls
 end
 
 function onInteraction(args)
