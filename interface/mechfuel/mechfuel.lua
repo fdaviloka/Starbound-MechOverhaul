@@ -27,6 +27,10 @@ function init()
   self.effeciencySet = false
   self.fuels = config.getParameter("fuels")
   self.fuelTypes = config.getParameter("fuelTypes")
+
+  local previewMessage = world.sendEntityMessage(player.id(), "getFuelPreview")
+  self.preview = previewMessage:result()
+  widget.setChecked("btnPreview", self.preview)
 end
 
 function update(dt)
@@ -103,6 +107,12 @@ function insertFuel()
   if self.disabled then return end
 
   swapItem("itemSlot_fuel")
+end
+
+function togglePreview()
+  self.preview = not self.preview
+
+  world.sendEntityMessage(player.id(), "setFuelPreview", self.preview)
 end
 
 function fuel()
@@ -188,7 +198,7 @@ function setEfficiencyText(currentItem)
 end
 
 function fuelCountPreview(item)
-  if not item then
+  if not item or not self.preview then
     widget.setText("lblModuleCount", string.format("%.02f", self.currentFuel) .. " / " .. math.floor(self.maxFuel))
     return
   end

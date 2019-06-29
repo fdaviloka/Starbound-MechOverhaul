@@ -3,24 +3,24 @@ require "/scripts/vec2.lua"
 
 function init()
   message.setHandler("unlockMech", function()
-      if not self.unlocked then
-        self.unlocked = true
-        status.setStatusProperty("mechUnlocked", true)
+    if not self.unlocked then
+      self.unlocked = true
+      player.setProperty("mechUnlocked", true)
 
-        local starterSet = config.getParameter("starterMechSet")
-        local speciesBodies = config.getParameter("speciesStarterMechBody")
-        local playerSpecies = player.species()
-        if speciesBodies[playerSpecies] then
-          starterSet.body = speciesBodies[playerSpecies]
-        end
-
-        for _,item in pairs(starterSet) do
-          player.giveBlueprint(item)
-        end
-
-        setMechItemSet(starterSet)
+      local starterSet = config.getParameter("starterMechSet")
+      local speciesBodies = config.getParameter("speciesStarterMechBody")
+      local playerSpecies = player.species()
+      if speciesBodies[playerSpecies] then
+        starterSet.body = speciesBodies[playerSpecies]
       end
-    end)
+
+      for _,item in pairs(starterSet) do
+        player.giveBlueprint(item)
+      end
+
+      setMechItemSet(starterSet)
+    end
+  end)
 
   message.setHandler("mechUnlocked", function()
       return self.unlocked
@@ -100,6 +100,10 @@ function init()
 
   buildMechParameters()
 
+  if self.itemSet.body and not self.unlocked then
+    unlockMech()
+  end
+
   self.beaconCheck = world.findUniqueEntity("mechbeacon")
 
   self.beaconFlashTimer = 0
@@ -163,15 +167,32 @@ function setMechItemSet(newItemSet, chips)
   local currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
   local loadoutNum = currentLoadoutMessage:result() or 1
 
-  local chipsMessage = world.sendEntityMessage(player.id(), "getChips" .. loadoutNum)
-  self.chips = chipsMessage:result()
-
   buildMechParameters()
 
   if loadoutNum then
     world.sendEntityMessage(player.id(), "setLoadout" .. loadoutNum, newItemSet, chips)
   else
     world.sendEntityMessage(player.id(), "setLoadout1", newItemSet, chips)
+  end
+end
+
+function unlockMech()
+  if not self.unlocked then
+    self.unlocked = true
+    player.setProperty("mechUnlocked", true)
+
+    local starterSet = config.getParameter("starterMechSet")
+    local speciesBodies = config.getParameter("speciesStarterMechBody")
+    local playerSpecies = player.species()
+    if speciesBodies[playerSpecies] then
+      starterSet.body = speciesBodies[playerSpecies]
+    end
+
+    for _,item in pairs(starterSet) do
+      player.giveBlueprint(item)
+    end
+
+    setMechItemSet(starterSet)
   end
 end
 
@@ -184,6 +205,19 @@ function setMechColorIndexes(primaryIndex, secondaryIndex)
 end
 
 function update(dt)
+  --Initializing current loadout
+  if not self.init then
+    local currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
+    local loadoutNum = currentLoadoutMessage:result() or 1
+    local getLoadoutMessage = world.sendEntityMessage(player.id(), "getLoadouts")
+
+    self.loadouts = getLoadoutMessage:result()
+    self.itemSet = self.loadouts["loadout" .. loadoutNum]
+
+    buildMechParameters()
+
+    self.init = true
+  end
 
   --setting the max fuel count for arithmetics on dummy quest
   if self.mechParameters then
@@ -352,6 +386,14 @@ function buildMechParameters(itemSet, primaryColorIndex, secondaryColorIndex)
   itemSet = itemSet or self.itemSet
   primaryColorIndex = primaryColorIndex or self.primaryColorIndex
   secondaryColorIndex = secondaryColorIndex or self.secondaryColorIndex
+
+  local currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
+  local loadoutNum = currentLoadoutMessage:result() or 1
+
+  local chipsMessage = world.sendEntityMessage(player.id(), "getChips" .. loadoutNum)
+
+  self.chips = chipsMessage:result()
+
   if self.partManager:itemSetComplete(itemSet) then
     self.mechParameters = self.partManager:buildVehicleParameters(itemSet, primaryColorIndex, secondaryColorIndex)
     self.mechParameters.ownerUuid = player.uniqueId()
