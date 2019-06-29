@@ -167,9 +167,6 @@ function setMechItemSet(newItemSet, chips)
   local currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
   local loadoutNum = currentLoadoutMessage:result() or 1
 
-  local chipsMessage = world.sendEntityMessage(player.id(), "getChips" .. loadoutNum)
-  self.chips = chipsMessage:result()
-
   buildMechParameters()
 
   if loadoutNum then
@@ -208,6 +205,19 @@ function setMechColorIndexes(primaryIndex, secondaryIndex)
 end
 
 function update(dt)
+  --Initializing current loadout
+  if not self.init then
+    local currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
+    local loadoutNum = currentLoadoutMessage:result() or 1
+    local getLoadoutMessage = world.sendEntityMessage(player.id(), "getLoadouts")
+
+    self.loadouts = getLoadoutMessage:result()
+    self.itemSet = self.loadouts["loadout" .. loadoutNum]
+
+    buildMechParameters()
+
+    self.init = true
+  end
 
   --setting the max fuel count for arithmetics on dummy quest
   if self.mechParameters then
@@ -376,6 +386,14 @@ function buildMechParameters(itemSet, primaryColorIndex, secondaryColorIndex)
   itemSet = itemSet or self.itemSet
   primaryColorIndex = primaryColorIndex or self.primaryColorIndex
   secondaryColorIndex = secondaryColorIndex or self.secondaryColorIndex
+
+  local currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
+  local loadoutNum = currentLoadoutMessage:result() or 1
+
+  local chipsMessage = world.sendEntityMessage(player.id(), "getChips" .. loadoutNum)
+
+  self.chips = chipsMessage:result()
+
   if self.partManager:itemSetComplete(itemSet) then
     self.mechParameters = self.partManager:buildVehicleParameters(itemSet, primaryColorIndex, secondaryColorIndex)
     self.mechParameters.ownerUuid = player.uniqueId()

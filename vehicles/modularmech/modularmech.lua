@@ -134,7 +134,7 @@ function init()
 
   local params = {}
   params.parts = self.parts
-  params = MechPartManager.calculateTotalMass(params, self.chips)
+  --params = MechPartManager.calculateTotalMass(params, self.chips)
   self.parts = params.parts
 
   -- setup body

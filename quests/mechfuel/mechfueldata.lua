@@ -48,6 +48,14 @@ function init()
 	  return storage.fuelType
   end)
 
+  message.setHandler("setFuelPreview", function(_, _, value)
+    storage.fuelPreview = value
+  end)
+
+  message.setHandler("getFuelPreview", function()
+    return storage.fuelPreview
+  end)
+
   if not storage.currentMaxFuel then
     storage.currentMaxFuel = 0
   end
@@ -61,23 +69,29 @@ function update(dt)
   if storage.currentMaxFuel and storage.lastMaxFuel and storage.fuelType then
     if storage.currentMaxFuel < storage.lastMaxFuel and storage.fuelCount == storage.lastMaxFuel then
       local itemName = ""
+      local ratio = 1
 
       if storage.fuelType == "Oil" then
         itemName = "liquidoil"
+        ratio = 2
       elseif storage.fuelType == "Erchius" then
         itemName = "liquidfuel"
+        ratio = 1.1
       elseif storage.fuelType == "Unrefined" then
         itemName = "unrefinedliquidmechfuel"
-      elseif storage.fuelType == "Mech fuel" then
+        ratio = 0.5
+      else
         itemName = "liquidmechfuel"
+        ratio = 0.25
       end
 
       local itemCount = storage.lastMaxFuel - storage.currentMaxFuel
 
-      if itemName and itemCount then
+      if itemName and itemCount and ratio then
         local item = {}
         item.name = itemName
-        item.count = itemCount
+        item.count = itemCount * ratio
+
         player.giveItem(item)
       end
     end
