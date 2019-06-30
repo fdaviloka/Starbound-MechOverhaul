@@ -210,11 +210,24 @@ function update(dt)
     local currentLoadoutMessage = world.sendEntityMessage(player.id(), "getCurrentLoadout")
     local loadoutNum = currentLoadoutMessage:result() or 1
     local getLoadoutMessage = world.sendEntityMessage(player.id(), "getLoadouts")
+    local chipsMessage = world.sendEntityMessage(player.id(), "getChips" .. loadoutNum)
 
     self.loadouts = getLoadoutMessage:result()
-    self.itemSet = self.loadouts["loadout" .. loadoutNum]
+    self.chips = chipsMessage:result()
 
-    buildMechParameters()
+    --initialize loadouts if not yet initialized
+    if not self.loadouts then
+      self.loadouts = {}
+    end
+
+    --if first time using loadouts
+    if self.loadouts.first == 1 then
+      self.loadouts["loadout" .. loadoutNum] = self.itemSet
+
+      world.sendEntityMessage(player.id(), "setFirst", 2)
+    end
+
+    setMechItemSet(self.loadouts["loadout" .. loadoutNum], self.chips)
 
     self.init = true
   end

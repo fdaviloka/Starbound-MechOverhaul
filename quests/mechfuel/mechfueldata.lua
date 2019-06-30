@@ -66,8 +66,8 @@ function init()
 end
 
 function update(dt)
-  if storage.currentMaxFuel and storage.lastMaxFuel and storage.fuelType then
-    if storage.currentMaxFuel < storage.lastMaxFuel and storage.fuelCount == storage.lastMaxFuel then
+  if storage.currentMaxFuel and storage.lastMaxFuel and storage.lastFuelCount and storage.fuelType then
+    if storage.currentMaxFuel < storage.lastMaxFuel and storage.lastFuelCount > storage.currentMaxFuel then
       local itemName = ""
       local ratio = 1
 
@@ -85,12 +85,12 @@ function update(dt)
         ratio = 0.25
       end
 
-      local itemCount = storage.lastMaxFuel - storage.currentMaxFuel
+      local itemCount = storage.lastFuelCount - storage.currentMaxFuel
 
       if itemName and itemCount and ratio then
         local item = {}
         item.name = itemName
-        item.count = itemCount * ratio
+        item.count = math.floor(itemCount * ratio)
 
         player.giveItem(item)
       end
@@ -98,6 +98,7 @@ function update(dt)
   end
 
   storage.lastMaxFuel = storage.currentMaxFuel
+  storage.lastFuelCount = storage.fuelCount
 
   if storage.currentMaxFuel and storage.fuelCount then
     if storage.fuelCount > storage.currentMaxFuel then
