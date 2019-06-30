@@ -221,7 +221,7 @@ function update(dt)
     end
 
     --if first time using loadouts
-    if self.loadouts.first == 1 then
+    if not self.loadouts.first or self.loadouts.first == 1 then
       self.loadouts["loadout" .. loadoutNum] = self.itemSet
 
       world.sendEntityMessage(player.id(), "setFirst", 2)
