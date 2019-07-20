@@ -421,7 +421,7 @@ function update(dt)
 
   --XS Mechs -- NPC Mechs compatbility
   if self.driverId ~= self.ownerEntityId then
-    storage.energy = 100
+    storage.energy = self.energyMax
   end
 
   -- read controls or do deployment
